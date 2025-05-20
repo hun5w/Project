@@ -49,69 +49,92 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: "Login",
-  data() {
-    return {
-      loginType: "password", // password | code
-      phone: "",
-      password: "",
-      code: "",
-      countdown: 0,
-      timer: null,
-    };
-  },
-  methods: {
-    handleLogin() {
-      if (!this.phone) return this.$toast("请输入手机号");
+<script setup>
+import { ref } from 'vue';
+import { showToast } from 'vant';
+import { loginWithPassword, sendCaptcha, verifyCaptcha } from '@/api/auth';
+import { useRouter } from 'vue-router';
 
-      if (this.loginType === "password" && !this.password) {
-        return this.$toast("请输入密码");
+const router = useRouter();
+
+const loginType = ref('password'); // 'password' 或 'code'
+const phone = ref('');
+const password = ref('');
+const code = ref('');
+const countdown = ref(0);
+let timer = null;
+
+// 切换登录方式
+function switchLogin(type) {
+  loginType.value = type;
+}
+
+// 发送验证码
+async function handleSendCode() {
+  if (!/^1[3-9]\d{9}$/.test(phone.value)) {
+    showToast('请输入有效的手机号');
+    return;
+  }
+  try {
+    const res = await sendCaptcha(phone.value);
+    if (res.code === 200) {
+      showToast('验证码已发送');
+      startCountdown();
+    } else {
+      showToast(res.msg || '发送失败');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('网络错误');
+  }
+}
+
+// 倒计时逻辑
+function startCountdown() {
+  countdown.value = 60;
+  timer = setInterval(() => {
+    countdown.value--;
+    if (countdown.value <= 0) clearInterval(timer);
+  }, 1000);
+}
+
+// 登录操作
+async function handleLogin() {
+  if (!/^1[3-9]\d{9}$/.test(phone.value)) {
+    showToast('请输入有效的手机号');
+    return;
+  }
+
+  try {
+    let res;
+    if (loginType.value === 'password') {
+      if (!password.value) {
+        showToast('请输入密码');
+        return;
       }
-      if (this.loginType === "code" && !this.code) {
-        return this.$toast("请输入验证码");
+      res = await loginWithPassword(phone.value, password.value);
+    } else {
+      if (!code.value) {
+        showToast('请输入验证码');
+        return;
       }
+      res = await verifyCaptcha(phone.value, code.value);
+    }
 
-      // TODO: 替换为你的登录请求
-      const payload = {
-        phone: this.phone,
-        ...(this.loginType === "password"
-          ? { password: this.password }
-          : { code: this.code }),
-      };
-
-      console.log("登录信息：", payload);
-      this.$toast("模拟登录成功");
-    },
-    sendCode() {
-      if (!this.phone) return this.$toast("请输入手机号");
-
-      // TODO: 调用发送验证码的 API
-      this.$toast("验证码已发送");
-
-      // 模拟倒计时
-      this.countdown = 60;
-      this.timer = setInterval(() => {
-        if (this.countdown <= 1) {
-          clearInterval(this.timer);
-          this.timer = null;
-        }
-        this.countdown--;
-      }, 1000);
-    },
-    goRegister() {
-      this.$toast("跳转注册页");
-    },
-    forgotPassword() {
-      this.$toast("请尝试使用验证码登录");
-    },
-  },
-  beforeUnmount() {
-    clearInterval(this.timer);
-  },
-};
+    if (res.code === 200) {
+      showToast('登录成功');
+      localStorage.setItem('userInfo', JSON.stringify(res.profile || {}));
+      router.push('/profile'); // 登录成功跳转页面
+    } else {
+      showToast(res.msg || '登录失败');
+    }
+  } catch (err) {
+    console.error('登录失败:', err);
+    showToast('请求失败');
+  }
+}
 </script>
+
 
 <style scoped>
 .login-container {
