@@ -5,10 +5,16 @@ const router = createRouter({
     routes:[
         {
             path:'/',
-            redirect:'/home'
+            redirect:'/login'
         },
 
         {
+            
+            path:'/login',
+            component:()=>import('../views/login/LoginIndex.vue')
+        },
+        {
+            
             path:'/mine',
             component:()=>import('../views/mine/MineIndex.vue')
         },
