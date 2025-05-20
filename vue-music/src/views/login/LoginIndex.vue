@@ -1,178 +1,123 @@
 <template>
   <div class="login-container">
-    <h2 class="login-title">网易云音乐 - 登录</h2>
+    <van-form @submit="handleLogin">
+      <van-cell-group inset>
+        <van-field
+          v-model="phone"
+          label="手机号"
+          placeholder="请输入手机号"
+          type="tel"
+          maxlength="11"
+          required
+        />
+        <van-field
+          v-model="code"
+          label="验证码"
+          placeholder="请输入验证码"
+          maxlength="6"
+          required
+        >
+          <template #button>
+            <van-button
+              size="small"
+              type="primary"
+              :disabled="countdown > 0"
+              @click="handleSendCode"
+            >
+              {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
+            </van-button>
+          </template>
+        </van-field>
+      </van-cell-group>
 
-    <!-- 登录方式切换 -->
-    <div class="login-toggle">
-      <span :class="{ active: loginType === 'password' }" @click="loginType = 'password'">密码登录</span>
-      <span :class="{ active: loginType === 'code' }" @click="loginType = 'code'">验证码登录</span>
-    </div>
-
-    <van-cell-group inset>
-      <van-field
-        v-model="phone"
-        label="手机号"
-        placeholder="请输入手机号"
-        clearable
-      />
-      <van-field
-        v-if="loginType === 'password'"
-        v-model="password"
-        type="password"
-        label="密码"
-        placeholder="请输入密码"
-        clearable
-      />
-      <van-field
-        v-if="loginType === 'code'"
-        v-model="code"
-        label="验证码"
-        placeholder="请输入验证码"
-        clearable
-      >
-        <template #button>
-          <van-button size="small" type="primary" @click="sendCode" :disabled="countdown > 0">
-            {{ countdown > 0 ? `${countdown}s` : '发送验证码' }}
-          </van-button>
-        </template>
-      </van-field>
-    </van-cell-group>
-
-    <van-button type="primary" block class="login-button" @click="handleLogin">
-      登录
-    </van-button>
-
-    <div class="login-footer">
-      <span @click="goRegister">注册账号</span>
-      <span @click="forgotPassword">忘记密码？</span>
-    </div>
+      <div style="margin: 16px;">
+        <van-button round block type="primary" native-type="submit">
+          登录
+        </van-button>
+      </div>
+    </van-form>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { showToast } from 'vant';
-import { loginWithPassword, sendCaptcha, verifyCaptcha } from '@/api/auth';
-import { useRouter } from 'vue-router';
+import { ref } from 'vue'
+import { showToast } from 'vant'
+import { sendCaptcha, verifyCaptcha } from '@/api/auth'
+import { useRouter } from 'vue-router'
 
-const router = useRouter();
+const phone = ref('')
+const code = ref('')
+const countdown = ref(0)
+let timer = null
 
-const loginType = ref('password'); // 'password' 或 'code'
-const phone = ref('');
-const password = ref('');
-const code = ref('');
-const countdown = ref(0);
-let timer = null;
+const router = useRouter()
 
-// 切换登录方式
-function switchLogin(type) {
-  loginType.value = type;
+function validatePhone() {
+  return /^1[3-9]\d{9}$/.test(phone.value)
 }
 
 // 发送验证码
 async function handleSendCode() {
-  if (!/^1[3-9]\d{9}$/.test(phone.value)) {
-    showToast('请输入有效的手机号');
-    return;
+  if (!validatePhone()) {
+    showToast('请输入有效的手机号')
+    return
   }
+
   try {
-    const res = await sendCaptcha(phone.value);
+    const res = await sendCaptcha(phone.value)
     if (res.code === 200) {
-      showToast('验证码已发送');
-      startCountdown();
+      showToast('验证码已发送')
+      startCountdown()
     } else {
-      showToast(res.msg || '发送失败');
+      showToast(res.msg || '发送失败')
     }
   } catch (err) {
-    console.error(err);
-    showToast('网络错误');
+    console.error(err)
+    showToast('发送验证码失败')
   }
 }
 
-// 倒计时逻辑
+// 倒计时
 function startCountdown() {
-  countdown.value = 60;
+  countdown.value = 60
   timer = setInterval(() => {
-    countdown.value--;
-    if (countdown.value <= 0) clearInterval(timer);
-  }, 1000);
+    countdown.value--
+    if (countdown.value <= 0) {
+      clearInterval(timer)
+    }
+  }, 1000)
 }
 
-// 登录操作
+// 验证码登录
 async function handleLogin() {
-  if (!/^1[3-9]\d{9}$/.test(phone.value)) {
-    showToast('请输入有效的手机号');
-    return;
+  if (!validatePhone()) {
+    showToast('请输入有效的手机号')
+    return
+  }
+
+  if (!code.value) {
+    showToast('请输入验证码')
+    return
   }
 
   try {
-    let res;
-    if (loginType.value === 'password') {
-      if (!password.value) {
-        showToast('请输入密码');
-        return;
-      }
-      res = await loginWithPassword(phone.value, password.value);
-    } else {
-      if (!code.value) {
-        showToast('请输入验证码');
-        return;
-      }
-      res = await verifyCaptcha(phone.value, code.value);
-    }
-
+    const res = await verifyCaptcha(phone.value, code.value)
     if (res.code === 200) {
-      showToast('登录成功');
-      localStorage.setItem('userInfo', JSON.stringify(res.profile || {}));
-      router.push('/profile'); // 登录成功跳转页面
+      showToast('登录成功')
+      localStorage.setItem('userInfo', JSON.stringify(res))
+      router.push('/profile') // 登录成功跳转
     } else {
-      showToast(res.msg || '登录失败');
+      showToast(res.msg || '登录失败')
     }
   } catch (err) {
-    console.error('登录失败:', err);
-    showToast('请求失败');
+    console.error('登录失败:', err)
+    showToast('请求失败')
   }
 }
 </script>
 
-
 <style scoped>
 .login-container {
-  padding: 30px 20px;
-}
-.login-title {
-  text-align: center;
-  font-size: 22px;
-  margin-bottom: 20px;
-  font-weight: bold;
-}
-.login-toggle {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-.login-toggle span {
-  margin: 0 10px;
-  font-size: 16px;
-  cursor: pointer;
-  color: #888;
-}
-.login-toggle .active {
-  color: #1989fa;
-  font-weight: bold;
-  border-bottom: 2px solid #1989fa;
-}
-.login-button {
-  margin: 20px 0;
-}
-.login-footer {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  color: #888;
-  padding: 0 4px;
-}
-.login-footer span {
-  cursor: pointer;
+  padding: 20px;
 }
 </style>
