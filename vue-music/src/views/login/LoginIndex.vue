@@ -105,7 +105,7 @@ async function handleLogin() {
     if (res.code === 200) {
       showToast('登录成功')
       localStorage.setItem('userInfo', JSON.stringify(res))
-      router.push('/profile') // 登录成功跳转
+      router.push('/home') // 登录成功跳转
     } else {
       showToast(res.msg || '登录失败')
     }
