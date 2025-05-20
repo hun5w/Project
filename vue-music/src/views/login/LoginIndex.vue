@@ -1,5 +1,7 @@
 <template>
   <div class="login-container">
+    <div class="login-box">
+      <h1>欢迎登录</h1>
     <van-form @submit="handleLogin">
       <van-cell-group inset>
         <van-field
@@ -37,6 +39,7 @@
       </div>
     </van-form>
   </div>
+</div>
 </template>
 
 <script setup>
@@ -118,6 +121,19 @@ async function handleLogin() {
 
 <style scoped>
 .login-container {
-  padding: 20px;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to right, #ff7e5f, #feb47b);;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 380px;
+  padding: 24px;
+  border-radius: 12px;
+  background: #f7f8fa;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 </style>
