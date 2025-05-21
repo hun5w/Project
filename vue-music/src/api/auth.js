@@ -1,37 +1,41 @@
-import { localUsers } from '@/data/users'
+import request from '@/utils/request'
 
-// 模拟登录
-export function loginLocal(phone, password) {
-  const user = localUsers.find(u => u.phone === phone && u.password === password)
-  if (user) {
-    saveLoginData(user)
-    return user
-  } else {
-    throw new Error('手机号或密码错误')
+export function sendCaptcha(phone) {
+  return request.get('/captcha/sent', {
+    params: { phone }
+  })
+}
+
+export async function loginWithCaptcha(phone, captcha) {
+  const res = await request.get('/login/cellphone', {
+    params: { phone, captcha }
+  })
+
+  if (res.data.code !== 200) {
+    throw new Error(res.data.message || '登录失败')
   }
-}
 
-// 保存用户数据到 localStorage
-export function saveLoginData(user) {
-  localStorage.setItem('local_user', JSON.stringify(user))
+  const uid = res.data.account.id
+  const detail = await request.get('/user/detail', { params: { uid } })
+
+  const profile = {
+    ...res.data.profile,
+    level: detail.data.level,
+    listenSongs: detail.data.listenSongs,
+    playlistCount: detail.data.profile.playlistCount,
+    follows: detail.data.profile.follows,
+    fans: detail.data.profile.followeds
+  }
+
   localStorage.setItem('isLoggedIn', 'true')
-  localStorage.setItem('loginType', 'user')
+  localStorage.setItem('loginType', 'captcha')
+  localStorage.setItem('userProfile', JSON.stringify(profile))
+
+  return profile
 }
 
-// 获取用户信息
+// 记得加上这个函数的导出
 export function getUserProfile() {
-  const data = localStorage.getItem('local_user')
-  return data ? JSON.parse(data) : null
-}
-
-// 是否已登录
-export function isLoggedIn() {
-  return localStorage.getItem('isLoggedIn') === 'true'
-}
-
-// 退出登录
-export function logout() {
-  localStorage.removeItem('local_user')
-  localStorage.removeItem('isLoggedIn')
-  localStorage.removeItem('loginType')
+  const json = localStorage.getItem('userProfile')
+  return json ? JSON.parse(json) : null
 }
