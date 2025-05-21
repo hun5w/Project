@@ -21,6 +21,15 @@
       >
         重新生成二维码
       </van-button>
+
+      <van-button
+        type="default"
+        block
+        round
+        @click="loginAsGuest"
+      >
+        游客登录
+      </van-button>
     </div>
   </div>
 </template>
@@ -33,18 +42,15 @@ import axios from 'axios'
 import { loginWithQRCode } from '@/api/auth.js'
 
 const router = useRouter()
-
-// 本地 API 地址
 const apiBaseURL = 'http://localhost:3000'
 
 const qrKey = ref('')
 const qrImg = ref('')
-const status = ref('loading') // loading, waitScan, waitConfirm, success, expired, error
+const status = ref('loading') // 状态：loading, waitScan, waitConfirm, success, expired, error
 const statusText = ref('')
 
 let timer = null
 
-// 创建 axios 实例，withCredentials 确保 cookie 支持
 const request = axios.create({
   baseURL: apiBaseURL,
   withCredentials: true,
@@ -57,13 +63,11 @@ async function generateQRCode() {
   qrImg.value = ''
 
   try {
-    // 1. 获取 key
     const keyRes = await request.get('/login/qr/key', {
       params: { timestamp: Date.now() }
     })
     qrKey.value = keyRes.data.data.unikey
 
-    // 2. 获取二维码图片
     const qrRes = await request.get('/login/qr/create', {
       params: { key: qrKey.value, qrimg: true, timestamp: Date.now() }
     })
@@ -71,7 +75,6 @@ async function generateQRCode() {
     status.value = 'waitScan'
     statusText.value = '请使用网易云音乐 APP 扫描二维码登录'
 
-    // 3. 启动轮询监听扫码状态
     startPolling()
   } catch (error) {
     status.value = 'error'
@@ -87,37 +90,28 @@ async function checkQRCodeStatus() {
     })
     const code = res.data.code
     switch (code) {
-      case 800: // 二维码过期
+      case 800:
         status.value = 'expired'
         statusText.value = '二维码已过期，请点击重新生成'
         stopPolling()
         break
-      case 801: // 等待扫码
+      case 801:
         status.value = 'waitScan'
         statusText.value = '请使用网易云音乐 APP 扫描二维码登录'
         break
-      case 802: // 已扫码，等待确认
+      case 802:
         status.value = 'waitConfirm'
         statusText.value = '扫码成功，请在手机上确认登录'
         break
-      case 803: // 登录成功
+      case 803:
         status.value = 'success'
         statusText.value = '登录成功，正在跳转...'
         stopPolling()
-
-        // 登录成功后，cookie 会被设置，保存 cookie
         saveCookieFromResponse(res)
-
-        // 请求用户详情保存到 localStorage
         await fetchUserProfile()
-
-        // 跳转首页
         setTimeout(() => {
           router.push('/home')
         }, 1000)
-        break
-      default:
-        // 其他状态不处理
         break
     }
   } catch (error) {
@@ -142,19 +136,10 @@ function stopPolling() {
   }
 }
 
-// 保存服务器返回的 cookie 到浏览器 localStorage
 function saveCookieFromResponse() {
-  // 真实 cookie 保存在 axios 的 set-cookie 头，浏览器环境下 axios不会直接暴露
-  // 这里通过二次请求 /login/status 拿到 cookie（或者在 API 服务器中返回 cookie）
-  // 简化方案：请求 /login/status 并取响应头（建议后端改为返回 cookie 字符串）
-
-  // 这里我们直接调用 /login/status 获取登录状态及用户信息
-  // cookie 会自动保存到浏览器（前提：withCredentials: true 且 API 跨域配置正确）
-
-  // 暂时啥也不做，登录状态靠浏览器 cookie 保持
+  // 简化处理，使用浏览器自动保存 cookie
 }
 
-// 请求用户详情接口，保存用户信息到 localStorage
 async function fetchUserProfile() {
   try {
     const profile = await loginWithQRCode()
@@ -162,6 +147,29 @@ async function fetchUserProfile() {
   } catch (error) {
     console.error('获取用户信息失败', error)
   }
+}
+
+// 游客登录逻辑
+function loginAsGuest() {
+  const guestProfile = {
+    id: 0,
+    nickname: '游客',
+    avatarUrl: 'https://img.icons8.com/color/96/guest-male.png',
+    signature: '欢迎体验网易云音乐',
+    vipType: 0,
+    level: 0,
+    listenSongs: 0,
+    playlistCount: 0,
+    follows: 0,
+    fans: 0
+  }
+
+  localStorage.setItem('isLoggedIn', 'true')
+  localStorage.setItem('loginType', 'guest')
+  localStorage.setItem('userProfile', JSON.stringify(guestProfile))
+
+  showToast('已以游客身份登录')
+  router.push('/home')
 }
 
 onMounted(() => {
