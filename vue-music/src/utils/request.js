@@ -1,16 +1,9 @@
 import axios from 'axios'
 
-const service = axios.create({
-  baseURL: 'https://netease-cloud-music-api.vercel.app/',
-  timeout: 5000,
+const request = axios.create({
+  baseURL: 'http://localhost:3000', // 你本地运行 NeteaseCloudMusicApi 的地址
+  withCredentials: true, // 确保 cookie 跨域有效
+  timeout: 10000
 })
 
-service.interceptors.response.use(
-  response => response.data,
-  error => {
-    console.error('请求出错：', error)
-    return Promise.reject(error)
-  }
-)
-
-export default service
+export default request
