@@ -30,6 +30,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { showToast } from 'vant'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { loginWithQRCode } from '@/api/auth.js'
 
 const router = useRouter()
 
@@ -156,13 +157,8 @@ function saveCookieFromResponse() {
 // 请求用户详情接口，保存用户信息到 localStorage
 async function fetchUserProfile() {
   try {
-    const res = await request.get('/login/status')
-    if (res.data.data && res.data.data.profile) {
-      localStorage.setItem('isLoggedIn', 'true')
-      localStorage.setItem('loginType', 'qr')
-      localStorage.setItem('userProfile', JSON.stringify(res.data.data.profile))
-      showToast('登录成功，欢迎 ' + res.data.data.profile.nickname)
-    }
+    const profile = await loginWithQRCode()
+    showToast('登录成功，欢迎 ' + profile.nickname)
   } catch (error) {
     console.error('获取用户信息失败', error)
   }
