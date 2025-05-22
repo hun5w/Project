@@ -46,7 +46,7 @@ const handleLogin = () => {
   try {
     loginUser({ username: username.value.trim(), password: password.value.trim() })
     showToast('登录成功')
-    router.push('/user')
+    router.push('/mine')
   } catch (e) {
     showToast(e.message)
   }
