@@ -19,11 +19,6 @@ const router = createRouter({
         },
 
         {
-            path: '/user',
-            component: () => import('@/views/mine/MineIndex.vue')
-        },
-
-        {
             
             path:'/mine',
             component:()=>import('../views/mine/MineIndex.vue')
@@ -43,6 +38,8 @@ const router = createRouter({
             path:'/home',
             component:()=>import('../views/home/HomeIndex.vue')
         },
+
+        
     ]
 })
 
