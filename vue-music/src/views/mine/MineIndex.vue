@@ -35,10 +35,9 @@
     </div>
 
     <div class="menu-cards">
-      <div class="menu-card">我的动态</div>
-      <div class="menu-card">我的收藏</div>
-      <div class="menu-card">我的好友</div>
-      <div class="menu-card">我的钱包</div>
+      <div class="menu-card">我的歌单</div>
+      <div class="menu-card">播放历史</div>
+      <div class="menu-card">个人信息</div>
     </div>
 
     <van-button
@@ -50,38 +49,53 @@
     >
       重新登录
     </van-button>
+
+    <van-button
+      v-else
+      type="default"
+      block
+      class="logout-button"
+      @click="logout"
+    >
+      退出登录
+    </van-button>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getUserProfile } from '@/api/auth' // 直接使用您的auth.js方法
+import { getUserProfile, logoutUser } from '@/api/auth'
+import { useRouter } from 'vue-router'
 
-const user = ref(getUserProfile()) // 初始化时读取本地存储
+const router = useRouter()
+const user = ref(getUserProfile())
 
-// 实时计算登录状态
+const defaultAvatar = 'https://img.icons8.com/color/96/user.png' // 可根据需要替换
+
 const isGuest = computed(() => !user.value)
 
-// 刷新用户信息
-const refreshProfile = async () => {
-  try {
-    // 这里需要添加一个获取最新资料的方法
-    // 或者重新登录获取数据（根据您的业务需求）
-    user.value = getUserProfile()
-  } catch (error) {
-    console.error('刷新用户信息失败:', error)
-  }
+const logout = () => {
+  logoutUser()
+  user.value = null
+  router.push('/login')
+}
+
+const goToLogin = () => {
+  router.push('/login')
+}
+
+const refreshProfile = () => {
+  user.value = getUserProfile()
 }
 
 onMounted(() => {
-  // 添加 visibilitychange 监听
   const handleVisibilityChange = () => {
     if (document.visibilityState === 'visible') {
       refreshProfile()
     }
   }
   document.addEventListener('visibilitychange', handleVisibilityChange)
-  
+
   return () => {
     document.removeEventListener('visibilitychange', handleVisibilityChange)
   }
@@ -215,5 +229,15 @@ onMounted(() => {
   font-weight: 700;
   font-size: 18px;
   padding: 12px 0;
+}
+
+.logout-button {
+  background-color: #c20c0c;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 12px 0;
+  margin-top: 10px;
+  color: #fff;
 }
 </style>
