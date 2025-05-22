@@ -70,8 +70,14 @@ const groupedTags = computed(() => {
 })
 
 function goToPlaylist(tagName) {
-  router.push({ path: '/playlist', query: { cat: tagName } })
+  router.push({
+    path: '/playlist',
+    query: {
+      cat: tagName
+    }
+  })
 }
+
 </script>
 
 <style scoped>
