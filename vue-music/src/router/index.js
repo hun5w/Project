@@ -14,6 +14,16 @@ const router = createRouter({
             component:()=>import('../views/login/LoginIndex.vue')
         },
         {
+            path: '/register',
+            component: () => import('@/views/login/RegisterIndex.vue')
+        },
+
+        {
+            path: '/user',
+            component: () => import('@/views/mine/MineIndex.vue')
+        },
+
+        {
             
             path:'/mine',
             component:()=>import('../views/mine/MineIndex.vue')
