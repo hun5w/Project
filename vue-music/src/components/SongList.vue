@@ -35,9 +35,10 @@ async function fetchPlaylist() {
   loading.value = true
   try {
     const res = await getPlaylistDetail(route.params.playlistId)
+    const playlistData = res.data.playlist || { name: '', tracks: [] }
     playlist.value = {
-      name: res.data.playlist.name,
-      songs: res.data.playlist.tracks.map(track => ({
+      name: playlistData.name,
+      songs: playlistData.tracks.map(track => ({
         id: track.id,
         name: track.name,
         artists: track.ar.map(a => a.name)
@@ -49,6 +50,7 @@ async function fetchPlaylist() {
     loading.value = false
   }
 }
+
 
 function goBack() {
   router.back()

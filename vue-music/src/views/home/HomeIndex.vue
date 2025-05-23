@@ -82,26 +82,29 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #f9f9f9;
+  background-color: #f0f2f5; // 柔和背景色
 
   .header {
     display: flex;
     align-items: center;
-    padding: 16px 20px;
-    background: linear-gradient(to right, #ff7e5f, #feb47b);
+    padding: 16px 24px;
+    background: linear-gradient(90deg, #ff7e5f 0%, #feb47b 100%);
     gap: 12px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(255, 126, 95, 0.3);
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
 
     .location {
       display: flex;
       align-items: center;
       color: #fff;
       font-weight: 700;
-      font-size: 20px;
+      font-size: 22px;
 
       .music-icon {
-        margin-right: 8px;
-        font-size: 22px;
+        margin-right: 10px;
+        font-size: 24px;
+        filter: drop-shadow(0 0 2px rgba(0,0,0,0.3));
       }
     }
 
@@ -109,14 +112,25 @@ export default {
       flex: 1;
       display: flex;
       align-items: center;
-      background: rgba(255, 255, 255, 0.25);
-      border-radius: 22px;
-      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 24px;
+      padding: 8px 16px;
       color: #fff;
-      transition: background 0.3s ease;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
 
       &:focus-within {
-        background: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 0 8px rgba(255, 126, 95, 0.6);
+        color: #333;
+
+        input::placeholder {
+          color: #aaa;
+          opacity: 1;
+        }
+
+        .search-icon {
+          color: #ff7e5f;
+        }
       }
 
       input {
@@ -124,26 +138,28 @@ export default {
         border: none;
         background: transparent;
         color: #fff;
+        font-size: 16px;
+        font-weight: 600;
         outline: none;
-        font-size: 15px;
-        font-weight: 500;
         padding-right: 8px;
+        transition: color 0.3s ease;
 
         &::placeholder {
-          color: #eee;
+          color: #ffe4d6;
           opacity: 0.8;
+          transition: color 0.3s ease, opacity 0.3s ease;
         }
       }
 
       .search-icon {
-        font-size: 20px;
+        font-size: 22px;
         cursor: pointer;
-        flex-shrink: 0;
         color: #fff;
+        flex-shrink: 0;
         transition: color 0.3s ease;
 
         &:hover {
-          color: #ffd1a9;
+          color: #ff6f48;
         }
       }
     }
@@ -152,12 +168,34 @@ export default {
   .main-content {
     flex: 1;
     overflow-y: auto;
-    padding: 16px 16px 24px;
+    padding: 20px 16px 24px;
+
+    /* 推荐歌单卡片样式示例 */
+    /* 你可以在RecommendPlaylist组件中自行配合 */
+    .playlist-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+      padding: 16px;
+      margin-bottom: 20px;
+      transition: box-shadow 0.3s ease, transform 0.2s ease;
+      cursor: pointer;
+
+      &:hover {
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.15);
+        transform: translateY(-3px);
+      }
+    }
   }
 
   .footer {
     flex-shrink: 0;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+    padding: 12px 0;
+    background: linear-gradient(90deg, #ff7e5f, #feb47b);
+    box-shadow: 0 -4px 10px rgba(255, 126, 95, 0.4);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
   }
 }
+
 </style>
