@@ -6,6 +6,7 @@
         v-for="item in playlists"
         :key="item.id"
         class="playlist-item"
+        @click="goToPlaylistDetail(item.id)"
       >
         <img :src="item.picUrl" class="cover" />
         <p class="name">{{ item.name }}</p>
@@ -22,8 +23,14 @@ export default {
       default: () => [],
     },
   },
+  methods: {
+    goToPlaylistDetail(id) {
+      this.$router.push(`/playlist/detail/${id}`);
+    },
+  },
 };
 </script>
+
 
 <style scoped>
 .playlist {
