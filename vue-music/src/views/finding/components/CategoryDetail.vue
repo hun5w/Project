@@ -97,21 +97,23 @@ function goBack() {
   router.back()
 }
 
-// 新增：点击歌单跳转详情页，假设详情路由是 /playlist/detail/:id
 function goToPlaylistDetail(id) {
   router.push({ path: `/playlist/detail/${id}` })
 }
 </script>
 
 <style scoped>
-/* 保持你原有的样式 */
+/* 页面整体容器 */
 .category-detail-container {
-  padding: 16px;
-  background-color: #fff;
+  padding: 12px 16px;
+  background-color: #ffffff; /* 白色背景 */
   min-height: 100vh;
   box-sizing: border-box;
+  color: #111; /* 主字体色 */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+/* 顶部 header 区域 */
 .header {
   display: flex;
   align-items: center;
@@ -119,48 +121,54 @@ function goToPlaylistDetail(id) {
   margin-bottom: 20px;
 }
 
+/* 返回按钮样式 */
 .back-btn {
-  width: 36px;
-  height: 36px;
-  background-color: #f3f4f6;
-  border: none;
-  border-radius: 50%;
+  padding: 6px 14px;
+  font-size: 14px;
+  color: #d81e06;
+  border: 1.8px solid #d81e06;
+  border-radius: 20px;
+  background: transparent;
   cursor: pointer;
-  display: flex;
+  user-select: none;
+  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
-  user-select: none;
+  flex-shrink: 0;
 }
 
 .back-btn:hover {
-  background-color: #e0e7ff;
-  box-shadow: 0 4px 10px rgb(59 130 246 / 0.4);
+  background-color: #d81e06;
+  color: #fff;
+  box-shadow: 0 0 8px #d81e06cc;
 }
 
 .back-icon {
   width: 20px;
   height: 20px;
-  color: #4f46e5;
+  color: #d81e06;
+  margin-right: 4px;
 }
 
+/* 标题 */
 .title {
-  font-size: 1.125rem;
+  font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: #111;
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* 加载和空状态 */
 .loading,
 .empty {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 144px;
+  height: 140px;
   color: #999;
   font-size: 14px;
   user-select: none;
@@ -184,49 +192,96 @@ function goToPlaylistDetail(id) {
   }
 }
 
+/* 歌单网格 */
 .playlist-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
 }
 
+/* 每个歌单卡片 */
 .playlist-item {
-  background: #f9f9f9;
+  background: #fafafa;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
   cursor: pointer;
   overflow: hidden;
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.25s ease;
   display: flex;
   flex-direction: column;
   user-select: none;
 }
 
 .playlist-item:hover {
-  box-shadow: 0 4px 8px rgb(0 0 0 / 0.15);
+  box-shadow: 0 6px 12px rgba(216, 30, 6, 0.2);
 }
 
+/* 歌单封面 */
 .cover-img {
   width: 100%;
-  height: 112px;
+  height: 96px;
   object-fit: cover;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #eee;
 }
 
+/* 歌单名称 */
 .playlist-name {
   font-size: 13px;
   font-weight: 500;
-  color: #444;
+  color: #222;
   padding: 8px 8px 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* 播放量 */
 .play-count {
   font-size: 11px;
-  color: #999;
+  color: #888;
   padding: 0 8px 8px;
   user-select: none;
+}
+
+/* 歌曲列表样式 */
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 60vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 6px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  color: #333;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+li:hover {
+  background-color: #f7f7f7;
+}
+
+li span.font-medium {
+  font-weight: 600;
+  color: #111;
+}
+
+li span.text-sm {
+  font-size: 12px;
+  color: #999;
+  margin-left: 6px;
+}
+
+/* 可复用：返回按钮容器间距 */
+.page-back-btn {
+  margin-bottom: 1rem;
 }
 </style>
