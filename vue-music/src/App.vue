@@ -1,8 +1,11 @@
 <template>
   <div id="app">
-    <router-view /> <!-- 页面内容区域 -->
+    <router-view /> <!-- 页面内容 -->
 
-    <!-- 只在非登录页显示底部导航栏 -->
+    <!-- 播放栏常驻底部导航上方 -->
+    <PlayerBar v-if="!isLoginPage && showPlayerBar" />
+
+    <!-- 底部导航栏 -->
     <van-tabbar
       v-if="!isLoginPage"
       route
@@ -14,20 +17,36 @@
       <van-tabbar-item to="/note" icon="chat-o">笔记</van-tabbar-item>
       <van-tabbar-item to="/mine" icon="contact">我的</van-tabbar-item>
     </van-tabbar>
+
+    <!-- 全局音频播放器 -->
+    <GlobalAudioPlayer />
   </div>
 </template>
 
-<script>
-export default {
-  name: "App",
-  computed: {
-    // 判断当前路径是否为登录页
-    isLoginPage() {
-      return this.$route.path === '/login'
-    }
-  }
-}
+<script setup>
+import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import PlayerBar from '@/components/player/PlayerBar.vue'
+import GlobalAudioPlayer from '@/components/player/GlobalAudio.vue'
+
+const route = useRoute()
+
+const isLoginPage = computed(() => {
+  return ['/login', '/register'].includes(route.path)
+})
+
+const showPlayerBar = ref(true)
+
+onMounted(() => {
+  window.addEventListener('hidePlayerBar', () => {
+    showPlayerBar.value = false
+  })
+  window.addEventListener('showPlayerBar', () => {
+    showPlayerBar.value = true
+  })
+})
 </script>
+
 
 <style>
 body, html, #app {
