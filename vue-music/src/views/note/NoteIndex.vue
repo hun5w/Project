@@ -27,7 +27,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getLocalNotes } from '@/data/localNotes' // 需要创建
+import { getLocalNotes } from '@/data/localNotes' 
 
 const newPost = ref('')
 const localPosts = ref([])
