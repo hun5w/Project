@@ -26,12 +26,15 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getPlaylistDetail } from '@/api/playlist'
+import { usePlayerStore } from '@/store/player'
 
 const route = useRoute()
 const router = useRouter()
 
 const playlist = ref({ name: '', songs: [] })
 const loading = ref(true)
+
+const playerStore = usePlayerStore()
 
 async function fetchPlaylist() {
   loading.value = true
@@ -58,6 +61,16 @@ function goBack() {
 }
 
 function goToSong(songId) {
+  // 先找到点击歌曲在歌单中的索引
+  const index = playlist.value.songs.findIndex(s => s.id === songId)
+  if (index === -1) return // 保护
+
+  // 设置Pinia播放列表和当前索引
+  playerStore.setPlaylist(playlist.value.songs.map(s => s.id))  // 设置完整歌曲id列表
+  playerStore.setCurrentIndex(index)                           // 设置当前播放歌曲索引
+  playerStore.setPlaying(true)                                 // 标记播放状态
+
+  // 跳转到播放页，songId参数可以保持（可选）
   router.push({ path: `/song/${songId}` })
 }
 
