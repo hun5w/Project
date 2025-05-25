@@ -1,65 +1,94 @@
 <template>
-  <div class="p-4 bg-white min-h-screen">
-    <button class="back-btn" @click="goBack" aria-label="返回">← 返回</button>
-    <h1 class="text-xl font-bold mb-4">{{ song.name }}</h1>
-    <p class="text-gray-600 mb-2">歌手：{{ song.artists.join(', ') }}</p>
-    <p class="text-gray-600 mb-4">专辑：{{ song.album }}</p>
-
+  <div class="song-detail">
+    <button @click="goBack">← 返回</button>
+    <h1>{{ song.name }}</h1>
     <audio
-      ref="audioPlayer"
-      :src="song.url"
+      ref="audio"
+      :src="songUrl"
+      @timeupdate="onTimeUpdate"
+      @ended="onEnded"
+      @loadedmetadata="onLoadedMetadata"
       controls
       autoplay
-      class="w-full"
     ></audio>
-
-    <div v-if="loading" class="text-gray-500 mt-4">加载中...</div>
+    <!-- 其他UI -->
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getSongDetail, getSongUrl } from '@/api/song' // 你需要实现这两个API
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
+import { usePlayerStore } from '@/store/player'
+import { getSongDetail, getSongUrl } from '@/api/song'
 
-const route = useRoute()
+const playerStore = usePlayerStore()
 const router = useRouter()
 
-const song = ref({
-  name: '',
-  artists: [],
-  album: '',
-  url: ''
-})
+const song = ref({})
+const songUrl = ref('')
+const audio = ref(null)
 
-const loading = ref(true)
-
-async function fetchSong() {
-  loading.value = true
-  try {
-    const detailRes = await getSongDetail(route.params.songId)
-    const urlRes = await getSongUrl(route.params.songId)
-
-    song.value.name = detailRes.data.songs[0].name
-    song.value.artists = detailRes.data.songs[0].ar.map(a => a.name)
-    song.value.album = detailRes.data.songs[0].al.name
-    song.value.url = urlRes.data.data[0].url
-  } catch (err) {
-    song.value = { name: '', artists: [], album: '', url: '' }
-  } finally {
-    loading.value = false
-  }
+async function loadSong() {
+  if (!playerStore.currentSongId) return
+  const detailRes = await getSongDetail(playerStore.currentSongId)
+  song.value = detailRes.data.songs[0]
+  const urlRes = await getSongUrl(playerStore.currentSongId)
+  songUrl.value = urlRes.data.data[0].url
 }
 
 function goBack() {
   router.back()
 }
 
-onMounted(fetchSong)
+function onTimeUpdate() {
+  if (audio.value) {
+    playerStore.setCurrentTime(audio.value.currentTime)
+  }
+}
+
+function onEnded() {
+  playerStore.next()
+}
+
+function onLoadedMetadata() {
+  if (audio.value) {
+    playerStore.setDuration(audio.value.duration)
+  }
+}
+
+// 监听store.currentTime，如果与播放器时间不一致则更新播放器进度
+watch(() => playerStore.currentTime, (newTime) => {
+  if (!audio.value) return
+  const diff = Math.abs(audio.value.currentTime - newTime)
+  if (diff > 0.5) {
+    audio.value.currentTime = newTime
+  }
+})
+
+// 监听播放状态同步
+watch(() => playerStore.playing, (playing) => {
+  if (!audio.value) return
+  if (playing) {
+    audio.value.play()
+  } else {
+    audio.value.pause()
+  }
+})
+
+// 进入页面时隐藏底部播放框
+onMounted(() => {
+  loadSong()
+  window.dispatchEvent(new CustomEvent('hidePlayerBar'))
+})
+
+// 离开页面时显示底部播放框
+onBeforeUnmount(() => {
+  playerStore.setPlaying(true)
+})
 </script>
 
 <style scoped>
-.back-btn {
+.song-detail button {
   margin-bottom: 1rem;
   color: #3b82f6;
   cursor: pointer;
