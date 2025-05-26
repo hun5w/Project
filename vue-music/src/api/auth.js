@@ -1,3 +1,5 @@
+// src/api/auth.js
+
 import { defaultUsers } from '@/data/user'
 
 const USERS_KEY = 'users'
@@ -12,17 +14,22 @@ export function saveUsers(users) {
   localStorage.setItem(USERS_KEY, JSON.stringify(users))
 }
 
-export function registerUser({ username, password }) {
+export function registerUser({ username, password, nickname, phone }) {
   const users = loadUsers()
+
   if (users.find(u => u.username === username)) {
     throw new Error('该用户名已存在')
+  }
+  if (users.find(u => u.phone === phone)) {
+    throw new Error('该手机号已被绑定')
   }
 
   const newUser = {
     id: Date.now(),
     username,
     password,
-    nickname: username,
+    nickname: nickname || username,
+    phone,
     avatarUrl: 'https://img.icons8.com/color/96/user.png',
     signature: '这个人很懒，什么都没有留下~',
     level: 1,
@@ -57,4 +64,17 @@ export function getUserProfile() {
 export function logoutUser() {
   localStorage.removeItem(PROFILE_KEY)
   localStorage.removeItem('current_user')
+}
+
+export function recoverPassword({ username, phone, newPassword }) {
+  const users = loadUsers()
+  const userIndex = users.findIndex(u => u.username === username && u.phone === phone)
+
+  if (userIndex === -1) {
+    throw new Error('账号与手机号不匹配')
+  }
+
+  users[userIndex].password = newPassword
+  saveUsers(users)
+  return true
 }
