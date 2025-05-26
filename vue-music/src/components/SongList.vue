@@ -27,6 +27,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getPlaylistDetail } from '@/api/playlist'
 import { usePlayerStore } from '@/store/player'
+import { useHistoryStore } from '@/store/history'
 
 const route = useRoute()
 const router = useRouter()
@@ -35,6 +36,7 @@ const playlist = ref({ name: '', songs: [] })
 const loading = ref(true)
 
 const playerStore = usePlayerStore()
+const historyStore = useHistoryStore()
 
 async function fetchPlaylist() {
   loading.value = true
@@ -70,6 +72,11 @@ function goToSong(songId) {
   playerStore.setCurrentIndex(index)                           // 设置当前播放歌曲索引
   playerStore.setPlaying(true)                                 // 标记播放状态
 
+  // --- 新增：加入播放历史 ---
+  // 拿到当前播放歌曲的完整信息对象
+  const song = playlist.value.songs[index]
+  historyStore.addSong(song)  // 加入播放历史
+  
   // 跳转到播放页，songId参数可以保持（可选）
   router.push({ path: `/song/${songId}` })
 }
