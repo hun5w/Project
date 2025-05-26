@@ -17,27 +17,20 @@
 
     <div class="info-cards">
       <div class="info-card">
-        <div class="number">{{ user?.listenSongs || 0 }}</div>
+        <div class="number">{{ listenSongsCount || 0 }}</div>
         <div class="label">听歌总数</div>
       </div>
       <div class="info-card">
         <div class="number">{{ user?.playlistCount || 0 }}</div>
         <div class="label">创建歌单</div>
       </div>
-      <div class="info-card">
-        <div class="number">{{ user?.follows || 0 }}</div>
-        <div class="label">关注</div>
-      </div>
-      <div class="info-card">
-        <div class="number">{{ user?.fans || 0 }}</div>
-        <div class="label">粉丝</div>
-      </div>
+      
     </div>
 
     <div class="menu-cards">
-      <div class="menu-card">我的歌单</div>
-      <div class="menu-card">播放历史</div>
-      <div class="menu-card">个人信息</div>
+      <div class="menu-card" @click="goToMyPlaylists">我的歌单</div>
+      <div class="menu-card" @click="goToHistory">播放历史</div>
+      <div class="menu-card" @click="goToProfile">个人信息</div>
     </div>
 
     <van-button
@@ -66,13 +59,27 @@
 import { ref, computed, onMounted } from 'vue'
 import { getUserProfile, logoutUser } from '@/api/auth'
 import { useRouter } from 'vue-router'
+import { useHistoryStore } from '@/store/history'
 
 const router = useRouter()
 const user = ref(getUserProfile())
-
-const defaultAvatar = 'https://img.icons8.com/color/96/user.png' // 可根据需要替换
+const historyStore = useHistoryStore()
 
 const isGuest = computed(() => !user.value)
+
+// 计算听歌总数 = 用户数据的 listenSongs + 播放历史去重后的歌曲数
+const listenSongsCount = computed(() => {
+  const historyList = Array.isArray(historyStore.songs) ? historyStore.songs : []
+  const uniqueHistoryCount = new Set(historyList.map(song => song.id)).size
+  return (user.value?.listenSongs || 0) + uniqueHistoryCount
+})
+
+
+
+// 导航相关
+const goToMyPlaylists = () => router.push('/my-playlists')
+const goToHistory = () => router.push('/history')
+const goToProfile = () => router.push('/profile')
 
 const logout = () => {
   logoutUser()
@@ -95,12 +102,14 @@ onMounted(() => {
     }
   }
   document.addEventListener('visibilitychange', handleVisibilityChange)
-
   return () => {
     document.removeEventListener('visibilitychange', handleVisibilityChange)
   }
 })
 </script>
+
+
+
 
 <style scoped>
 .user-profile {
