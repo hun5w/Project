@@ -25,7 +25,7 @@
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/store/player'
 import { useHistoryStore } from '@/store/history'
-import { computed } from 'vue'
+import { computed ,onMounted} from 'vue'
 
 const router = useRouter()
 const playerStore = usePlayerStore()
@@ -53,10 +53,13 @@ function goToSong(songId) {
 
   router.push({ path: `/song/${songId}` })
 }
+
+onMounted(() => {
+  historyStore.refresh()
+})
 </script>
 
 <style scoped>
-/* 以下样式与你歌单详情页一致 */
 
 .p-4 {
   padding: 1rem;
