@@ -11,10 +11,6 @@
         <span v-if="user?.vipType > 0" class="vip">VIP</span>
       </div>
     </div>
-
-    <h2 class="nickname">{{ user?.nickname || '未登录用户' }}</h2>
-    <p class="signature">{{ user?.signature || '这个人很神秘~' }}</p>
-
     <div class="info-cards">
       <div class="info-card">
         <div class="number">{{ listenSongsCount || 0 }}</div>
@@ -61,6 +57,8 @@ import { getUserProfile, logoutUser } from '@/api/auth'
 import { useRouter } from 'vue-router'
 import { useHistoryStore } from '@/store/history'
 
+useHistoryStore().refresh()
+
 const router = useRouter()
 const user = ref(getUserProfile())
 const historyStore = useHistoryStore()
@@ -83,6 +81,8 @@ const goToProfile = () => router.push('/profile')
 
 const logout = () => {
   logoutUser()
+  localStorage.removeItem('current_user')
+  historyStore.refresh()
   user.value = null
   router.push('/login')
 }
@@ -96,9 +96,12 @@ const refreshProfile = () => {
 }
 
 onMounted(() => {
+  historyStore.refresh()
+
   const handleVisibilityChange = () => {
     if (document.visibilityState === 'visible') {
       refreshProfile()
+      historyStore.refresh()
     }
   }
   document.addEventListener('visibilitychange', handleVisibilityChange)
