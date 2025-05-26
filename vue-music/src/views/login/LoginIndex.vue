@@ -1,34 +1,51 @@
 <template>
   <div class="login-container">
     <h2>账号登录</h2>
+
     <input
-      v-model="username"
+      v-model.trim="username"
       placeholder="请输入用户名"
       autocomplete="username"
       maxlength="20"
       class="input-field"
+      :disabled="loading"
+      @blur="validateUsername"
     />
+    <div v-if="usernameError" class="error-msg">{{ usernameError }}</div>
+
     <input
-      v-model="password"
+      v-model.trim="password"
       type="password"
       placeholder="请输入密码"
       autocomplete="current-password"
       maxlength="20"
       class="input-field"
+      :disabled="loading"
+      @blur="validatePassword"
     />
+    <div v-if="passwordError" class="error-msg">{{ passwordError }}</div>
+
     <van-button
       type="primary"
       block
       round
       @click="handleLogin"
-      :disabled="!username || !password"
+      :disabled="loading || !username || !password"
+      :loading="loading"
     >
       登录
     </van-button>
+
+    <div v-if="loginError" class="error-msg login-error">{{ loginError }}</div>
+
     <p class="switch-text">
       还没有账号？
       <span class="link" @click="goToRegister">点我注册</span>
     </p>
+    <p class="switch-text">
+  忘记密码？<span class="link" @click="goToRecover">点我找回</span>
+    </p>
+
   </div>
 </template>
 
@@ -36,25 +53,64 @@
 import { ref } from 'vue'
 import { loginUser } from '@/api/auth'
 import { useRouter } from 'vue-router'
-import { showToast } from 'vant'
 
 const username = ref('')
 const password = ref('')
+const usernameError = ref('')
+const passwordError = ref('')
+const loginError = ref('')
+const loading = ref(false)
+
 const router = useRouter()
 
-const handleLogin = () => {
+// 校验用户名是否为空
+const validateUsername = () => {
+  usernameError.value = username.value ? '' : '请输入用户名'
+}
+
+// 校验密码是否为空
+const validatePassword = () => {
+  passwordError.value = password.value ? '' : '请输入密码'
+}
+
+// 总体校验逻辑
+const validateInputs = () => {
+  validateUsername()
+  validatePassword()
+  return !usernameError.value && !passwordError.value
+}
+
+// 登录主逻辑
+const handleLogin = async () => {
+  loginError.value = ''
+  if (!validateInputs()) return
+
+  loading.value = true
   try {
-    loginUser({ username: username.value.trim(), password: password.value.trim() })
-    showToast('登录成功')
+    await loginUser({
+      username: username.value,
+      password: password.value
+    })
+    alert('登录成功！欢迎回来！')
     router.push('/mine')
-  } catch (e) {
-    showToast(e.message)
+  } catch (error) {
+    loginError.value = error.message || '登录失败，请重试'
+    alert('登录失败：' + loginError.value)
+  } finally {
+    loading.value = false
   }
 }
 
+// 跳转注册页面
 const goToRegister = () => {
   router.push('/register')
 }
+
+// 跳转找回密码页面
+const goToRecover = () => {
+  router.push('/recover')
+}
+
 </script>
 
 <style scoped>
@@ -80,7 +136,7 @@ h2 {
 .input-field {
   width: 100%;
   padding: 12px 16px;
-  margin-bottom: 18px;
+  margin-bottom: 4px;
   font-size: 16px;
   border: 1.8px solid #ddd;
   border-radius: 8px;
@@ -92,6 +148,20 @@ h2 {
   outline: none;
   border-color: #c20c0c;
   box-shadow: 0 0 6px #f33a3a66;
+}
+
+.error-msg {
+  color: #f33a3a;
+  font-size: 13px;
+  margin-bottom: 12px;
+  text-align: left;
+  padding-left: 4px;
+}
+
+.login-error {
+  margin-top: 10px;
+  font-weight: 600;
+  text-align: center;
 }
 
 .switch-text {
