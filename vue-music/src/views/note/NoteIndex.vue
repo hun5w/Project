@@ -3,20 +3,18 @@
     <h2>📌 我的动态</h2>
     <div class="post-box">
       <textarea v-model="newPost" placeholder="分享你的音乐心情..." />
-      <button @click="submitPost">发布</button>
+      <button @click="submitPost" :disabled="editingPost">发布</button>
     </div>
 
     <div v-if="localPosts.length === 0" class="no-post">暂无动态</div>
     <div v-for="item in localPosts" :key="item.id" class="event-item local">
-      <p class="content">{{ item.content }}</p>
+      <p class="content">{{ item.text }}</p>
       <p class="time">{{ item.time }}</p>
-      <!-- 可以在这里添加编辑和删除按钮 -->
       <button @click="editPost(item)">编辑</button>
       <button @click="deletePost(item.id)">删除</button>
     </div>
 
-    
-    <!-- 编辑框弹出部分，简单实现 -->
+    <!-- 编辑弹窗 -->
     <div v-if="editingPost" class="edit-modal">
       <textarea v-model="editingContent"></textarea>
       <button @click="saveEdit">保存</button>
@@ -27,74 +25,69 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getLocalNotes } from '@/data/localNotes' 
+import { getLocalNotes, saveLocalNote, updateLocalNote, deleteLocalNote } from '@/data/localNotes'
 
 const newPost = ref('')
 const localPosts = ref([])
-
-const editingPost = ref(null)   // 当前编辑的post对象
+const editingPost = ref(null)
 const editingContent = ref('')
+const user = ref(null)
 
 function refresh() {
   getLocalNotes().then(local => {
-    localPosts.value = local || []
+    localPosts.value = (local || []).map(item => ({
+      ...item,
+      time: item.eventTime
+        ? new Date(item.eventTime).toLocaleString('zh-CN', { hour12: false })
+        : ''
+    }))
   })
 }
 
 
-function submitPost() {
+async function submitPost() {
   if (!newPost.value.trim()) return alert('请输入内容')
-  const posts = JSON.parse(localStorage.getItem('myEvents') || '[]')
-  const post = {
-    id: Date.now(),
-    content: newPost.value,
-    time: new Date().toLocaleString()
-  }
-  posts.unshift(post)
-  localStorage.setItem('myEvents', JSON.stringify(posts))
+
+  await saveLocalNote(newPost.value.trim()) // ✅ 保证数据写入后再刷新
   newPost.value = ''
-  refresh()
+  await refresh()
 }
 
-// 编辑
 function editPost(post) {
   editingPost.value = post
   editingContent.value = post.content
 }
 
-// 保存编辑
-function saveEdit() {
+async function saveEdit() {
   if (!editingContent.value.trim()) return alert('请输入内容')
-  const posts = JSON.parse(localStorage.getItem('myEvents') || '[]')
-  const index = posts.findIndex(p => p.id === editingPost.value.id)
-  if (index !== -1) {
-    posts[index].content = editingContent.value
-    posts[index].time = new Date().toLocaleString()
-    localStorage.setItem('myEvents', JSON.stringify(posts))
-    refresh()
-  }
+
+  await updateLocalNote(editingPost.value.id, editingContent.value.trim())
+  refresh()
   editingPost.value = null
   editingContent.value = ''
 }
 
-// 取消编辑
 function cancelEdit() {
   editingPost.value = null
   editingContent.value = ''
 }
 
-// 删除
-function deletePost(id) {
+async function deletePost(id) {
   if (!confirm('确定删除这条动态吗？')) return
-  const posts = JSON.parse(localStorage.getItem('myEvents') || '[]')
-  const newPosts = posts.filter(p => p.id !== id)
-  localStorage.setItem('myEvents', JSON.stringify(newPosts))
+
+  await deleteLocalNote(id)
   refresh()
 }
 
-
-
 onMounted(() => {
+  const raw = localStorage.getItem('current_user')
+  if (raw) {
+    try {
+      user.value = JSON.parse(raw)
+    } catch (e) {
+      console.warn('Failed to parse current_user:', e)
+    }
+  }
   refresh()
 })
 </script>
@@ -142,20 +135,6 @@ button {
 .event-item.local {
   border-left: 4px solid #ff9e3c;
 }
-.user {
-  display: flex;
-  align-items: center;
-  margin-bottom: 6px;
-}
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  margin-right: 8px;
-}
-.nickname {
-  font-weight: bold;
-}
 .content {
   margin: 6px 0;
 }
@@ -163,13 +142,11 @@ button {
   font-size: 12px;
   color: #999;
 }
-.loading, .no-post {
+.no-post {
   color: #888;
   font-size: 14px;
   margin: 12px 0;
 }
-
-/* 编辑弹窗简单样式 */
 .edit-modal {
   position: fixed;
   top: 30%;
@@ -180,7 +157,7 @@ button {
   border: 1px solid #ccc;
   border-radius: 8px;
   transform: translate(-50%, -50%);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   z-index: 100;
 }
 .edit-modal textarea {
