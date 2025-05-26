@@ -43,7 +43,10 @@ export function loginUser({ username, password }) {
   const users = loadUsers()
   const user = users.find(u => u.username === username && u.password === password)
   if (!user) throw new Error('用户名或密码错误')
+
   localStorage.setItem(PROFILE_KEY, JSON.stringify(user))
+  localStorage.setItem('current_user', user.username)
+
   return user
 }
 
@@ -53,4 +56,5 @@ export function getUserProfile() {
 
 export function logoutUser() {
   localStorage.removeItem(PROFILE_KEY)
+  localStorage.removeItem('current_user')
 }
