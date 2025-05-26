@@ -27,6 +27,8 @@ import { ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { cloudSearch } from '@/api/search'
 import { usePlayerStore } from '@/store/player'
+import { useHistoryStore } from '@/store/history'
+
 
 const route = useRoute()
 const router = useRouter()
@@ -35,6 +37,8 @@ const playerStore = usePlayerStore()
 const keyword = ref(route.query.keyword || '')
 const songs = ref([])
 const loading = ref(false)
+
+const historyStore = useHistoryStore()
 
 const search = async () => {
   const kw = route.query.keyword?.trim()
@@ -64,6 +68,14 @@ const search = async () => {
 
 
 const playSong = (song) => {
+
+  // 添加到播放历史
+  historyStore.addSong({
+    id: song.id,
+    name: song.name,
+    artists: song.ar.map(a => a.name)
+  })
+  
   playerStore.setPlaylist(songs.value.map(s => s.id))
   const index = songs.value.findIndex(s => s.id === song.id)
   playerStore.setCurrentIndex(index)
@@ -84,7 +96,6 @@ watch(() => route.query.keyword, (newKw) => {
 </script>
 
 <style scoped>
-/* 样式同之前保持一致... */
 .p-6 {
   padding: 1.5rem;
   background-color: #fff;
