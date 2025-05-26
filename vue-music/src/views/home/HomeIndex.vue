@@ -71,8 +71,11 @@ export default {
         return;
       }
       // 这里你可以实现跳转搜索页或者调用搜索接口
-      console.log('搜索关键词:', this.searchKeyword);
-    }
+      this.$router.push({
+      path: '/search',
+      query: { keyword: this.searchKeyword.trim() }
+      });
+   }
   }
 };
 </script>
