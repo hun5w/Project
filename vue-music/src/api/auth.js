@@ -45,7 +45,7 @@ export function loginUser({ username, password }) {
   if (!user) throw new Error('用户名或密码错误')
 
   localStorage.setItem(PROFILE_KEY, JSON.stringify(user))
-  localStorage.setItem('current_user', user.username)
+  localStorage.setItem('current_user', JSON.stringify(user))
 
   return user
 }
