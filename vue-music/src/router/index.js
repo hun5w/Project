@@ -62,6 +62,12 @@ const router = createRouter({
       name: 'History',
       component: () => import('../views/mine/components/HistoryView.vue')
     },
+
+    {
+      path: '/my-playlists',
+      name: 'MyPlaylists',
+      component: () => import('../views/mine/components/MyPlaylists.vue') 
+    },
   ]
 })
 
