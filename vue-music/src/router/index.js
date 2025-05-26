@@ -50,6 +50,13 @@ const router = createRouter({
       path: '/home',
       component: () => import('../views/home/HomeIndex.vue')
     },
+    // src/router/index.js
+    {
+      path: '/search',
+      name: 'SearchResult',
+      component: () => import('../views/home/SearchResult.vue')
+    },
+
   ]
 })
 
