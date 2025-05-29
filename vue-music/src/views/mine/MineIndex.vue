@@ -26,7 +26,7 @@
     <div class="menu-cards">
       <div class="menu-card" @click="goToMyPlaylists">我的歌单</div>
       <div class="menu-card" @click="goToHistory">播放历史</div>
-      <div class="menu-card" @click="goToProfile">个人信息</div>
+      <div class="menu-card" @click="goToUserInfo">个人信息</div>
     </div>
 
     <van-button
@@ -77,7 +77,7 @@ const listenSongsCount = computed(() => {
 // 导航相关
 const goToMyPlaylists = () => router.push('/my-playlists')
 const goToHistory = () => router.push('/history')
-const goToProfile = () => router.push('/profile')
+const goToUserInfo = () => router.push('/info')
 
 const logout = () => {
   logoutUser()
