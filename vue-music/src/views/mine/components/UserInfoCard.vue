@@ -217,6 +217,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+
 .user-info-card {
   max-width: 420px;
   margin: 40px auto;
