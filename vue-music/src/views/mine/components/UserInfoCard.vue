@@ -108,11 +108,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 const defaultAvatar = '/default-avatar.png'
 const user = ref(null)
 const preview = ref(defaultAvatar)
 const newTag = ref('')
+const router = useRouter()
 
 const editData = ref({
   avatarUrl: '',
@@ -125,6 +127,10 @@ const editData = ref({
   education: '',
   musicTags: []
 })
+
+function goBack() {
+  router.push('/mine')
+}
 
 function loadUserData() {
   const localUser = localStorage.getItem('current_user')
