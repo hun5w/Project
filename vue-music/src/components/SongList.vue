@@ -68,7 +68,7 @@ function goToSong(songId) {
   if (index === -1) return // 保护
 
   // 设置Pinia播放列表和当前索引
-  playerStore.setPlaylist(playlist.value.songs.map(s => s.id))  // 设置完整歌曲id列表
+  playerStore.setPlaylist(playlist.value.songs)  // 设置完整歌曲id列表
   playerStore.setCurrentIndex(index)                           // 设置当前播放歌曲索引
   playerStore.setPlaying(true)                                 // 标记播放状态
 
