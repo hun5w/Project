@@ -52,15 +52,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted ,watch} from 'vue'
 import { getUserProfile, logoutUser } from '@/api/auth'
 import { useRouter } from 'vue-router'
 import { useHistoryStore } from '@/store/history'
 
-useHistoryStore().refresh()
-
 const router = useRouter()
+
 const user = ref(getUserProfile())
+
 const historyStore = useHistoryStore()
 
 const isGuest = computed(() => !user.value)
@@ -82,8 +82,8 @@ const goToUserInfo = () => router.push('/info')
 const logout = () => {
   logoutUser()
   localStorage.removeItem('current_user')
-  historyStore.refresh()
   user.value = null
+  historyStore.refresh()
   router.push('/login')
 }
 
@@ -91,9 +91,6 @@ const goToLogin = () => {
   router.push('/login')
 }
 
-const refreshProfile = () => {
-  user.value = getUserProfile()
-}
 
 onMounted(() => {
   historyStore.refresh()
@@ -108,6 +105,15 @@ onMounted(() => {
   return () => {
     document.removeEventListener('visibilitychange', handleVisibilityChange)
   }
+})
+
+function refreshProfile() {
+  user.value = getUserProfile()
+}
+
+// 监听用户变动，刷新播放历史
+watch(user, () => {
+  historyStore.refresh()
 })
 </script>
 
