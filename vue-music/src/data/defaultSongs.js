@@ -5,7 +5,7 @@ export const defaultSongs = [
     artist: '周杰伦',
     url: '/music/反方向的钟.mp3',
     cover: '/music/cover1.jpg', 
-    duration: 210 
+    duration: 258 
   },
   {
     id: 1002,
@@ -13,7 +13,7 @@ export const defaultSongs = [
     artist: '周杰伦',
     url: '/music/明明就.mp3',
     cover: '/music/cover2.jpg',
-    duration: 240
+    duration: 260
   },
   {
     id: 1003,
@@ -21,7 +21,7 @@ export const defaultSongs = [
     artist: '周杰伦',
     url: '/music/七里香.mp3',
     cover: '/music/cover3.jpg',
-    duration: 230
+    duration: 300
   },
   {
     id: 1004,
@@ -29,6 +29,6 @@ export const defaultSongs = [
     artist: '周杰伦',
     url: '/music/晴天.mp3',
     cover: '/music/cover4.jpg',
-    duration: 230
+    duration: 270
   }
 ]
