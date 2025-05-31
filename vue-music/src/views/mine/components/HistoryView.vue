@@ -67,7 +67,8 @@ function goToSong(songId) {
 }
 
 // 当前登录用户 ID（用于筛选歌单）
-const currentUserId = localStorage.getItem('current_user_id')
+const currentUserId = Number(localStorage.getItem('current_user_id')) || 1748691034990
+
 
 // 添加到歌单逻辑
 const showDialog = ref(false)
@@ -78,10 +79,12 @@ function openAddToPlaylist(song) {
   targetSong.value = song
   const saved = localStorage.getItem('user_playlists')
   const all = saved ? JSON.parse(saved) : []
-  // 只显示当前用户创建的歌单
-  playlists.value = all.filter(p => p.userId === currentUserId)
+
+  playlists.value = all.filter(p => p.userId == currentUserId)
   showDialog.value = true
 }
+
+
 
 function cancelAdd() {
   showDialog.value = false
@@ -105,6 +108,7 @@ function addToPlaylist(playlistId) {
 
   cancelAdd()
 }
+
 
 // 删除单条历史记录
 function deleteHistory(songId) {
