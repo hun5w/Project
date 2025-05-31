@@ -1,14 +1,18 @@
 import { defineStore } from 'pinia'
 
-let cachedUsername = null
-function getCurrentUsername() {
-  if (cachedUsername) return cachedUsername
-  cachedUsername = localStorage.getItem('current_user') || 'guest'
-  return cachedUsername
+function getCurrentUserId() {
+  const userJson = localStorage.getItem('current_user')
+  if (!userJson) return 'guest'
+  try {
+    const user = JSON.parse(userJson)
+    return user.id || 'guest'
+  } catch {
+    return 'guest'
+  }
 }
 
 function getHistoryKey() {
-  return `play_history_${getCurrentUsername()}`
+  return `play_history_${getCurrentUserId()}`
 }
 
 export const useHistoryStore = defineStore('history', {
