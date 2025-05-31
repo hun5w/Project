@@ -49,13 +49,6 @@ export const usePlayerStore = defineStore('player', {
     this.currentTime = 0
     this.duration = 0
   },
-
-  // ✅ 新增：播放本地歌单
-  playLocalSongs(songs, startIndex = 0) {
-    this.setPlaylist(songs)
-    this.setCurrentIndex(startIndex)
-    this.setPlaying(true)
-  },
 }
 ,
 })
