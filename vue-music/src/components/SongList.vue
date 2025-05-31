@@ -11,16 +11,39 @@
         v-for="song in playlist.songs"
         :key="song.id"
         class="song-item"
-        @click="goToSong(song.id)"
-        tabindex="0"
-        @keydown.enter="goToSong(song.id)"
       >
-        <span class="song-name">{{ song.name }}</span>
-        <span class="song-artist">- {{ song.artists.join(', ') }}</span>
+        <div
+          class="song-info"
+          @click="goToSong(song.id)"
+          tabindex="0"
+          @keydown.enter="goToSong(song.id)"
+        >
+          <span class="song-name">{{ song.name }}</span>
+          <span class="song-artist">- {{ song.artists.join(', ') }}</span>
+        </div>
+        <button class="add-btn" @click.stop="openAddToPlaylist(song)">+</button>
       </li>
     </ul>
+
+    <!-- 添加到歌单对话框 -->
+    <div v-if="showDialog" class="dialog" @click.self="cancelAdd">
+      <div class="dialog-box">
+        <h3>添加到歌单</h3>
+        <ul>
+          <li
+            v-for="playlist in playlists"
+            :key="playlist.id"
+            @click="addToPlaylist(playlist.id)"
+          >
+            {{ playlist.name }}
+          </li>
+        </ul>
+        <button @click="cancelAdd">取消</button>
+      </div>
+    </div>
   </div>
 </template>
+
 
 <script setup>
 import { ref, onMounted } from 'vue'
@@ -63,25 +86,63 @@ function goBack() {
 }
 
 function goToSong(songId) {
-  // 先找到点击歌曲在歌单中的索引
+  // 找到歌曲索引
   const index = playlist.value.songs.findIndex(s => s.id === songId)
-  if (index === -1) return // 保护
+  if (index === -1) return
 
-  // 设置Pinia播放列表和当前索引
-  playerStore.setPlaylist(playlist.value.songs)  
-  playerStore.setCurrentIndex(0)                           // 设置当前播放歌曲索引
-  playerStore.setPlaying(true)                                 // 标记播放状态
+  playerStore.setPlaylist(playlist.value.songs)
+  playerStore.setCurrentIndex(index)
+  playerStore.setPlaying(true)
 
-  // --- 新增：加入播放历史 ---
-  // 拿到当前播放歌曲的完整信息对象
+  // 加入播放历史
   const song = playlist.value.songs[index]
-  historyStore.addSong(song)  // 加入播放历史
-  
-  // 跳转到播放页，songId参数可以保持（可选）
+  historyStore.addSong(song)
+
   router.push({ path: `/song/${songId}` })
 }
 
+// 添加到歌单相关
+const showDialog = ref(false)
+const targetSong = ref(null)
+const playlists = ref([])
+
+// 当前登录用户 ID，用于筛选歌单
+const currentUserId = Number(localStorage.getItem('current_user_id')) || 1748691034990
+
+function openAddToPlaylist(song) {
+  targetSong.value = song
+  const saved = localStorage.getItem('user_playlists')
+  const all = saved ? JSON.parse(saved) : []
+
+  playlists.value = all.filter(p => p.userId == currentUserId)
+  showDialog.value = true
+}
+
+function cancelAdd() {
+  showDialog.value = false
+  targetSong.value = null
+}
+
+function addToPlaylist(playlistId) {
+  const saved = localStorage.getItem('user_playlists')
+  let allPlaylists = saved ? JSON.parse(saved) : []
+  const playlist = allPlaylists.find(p => p.id === playlistId && p.userId === currentUserId)
+  if (!playlist) return
+  if (!playlist.songs) playlist.songs = []
+
+  if (!playlist.songs.find(s => s.id === targetSong.value.id)) {
+    playlist.songs.push(targetSong.value)
+    localStorage.setItem('user_playlists', JSON.stringify(allPlaylists))
+    alert('添加成功！')
+  } else {
+    alert('该歌曲已存在于该歌单中')
+  }
+
+  cancelAdd()
+}
+
 onMounted(fetchPlaylist)
+
 </script>
 
 <style scoped>
@@ -194,6 +255,128 @@ li span:last-child {
 
 ::-webkit-scrollbar-track {
   background-color: #f7f7f7;
+}
+
+.song-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  max-width: 100%;
+}
+
+.song-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid #eaeaea;
+  cursor: default;
+  border-radius: 8px;
+  transition: background-color 0.25s ease;
+  font-size: 14px;
+  color: #333;
+  user-select: none;
+}
+.song-item:hover {
+  background-color: #ffdada;
+  color: #d81e06;
+}
+
+.song-info {
+  flex: 1;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.song-name {
+  font-weight: 600;
+  max-width: 65%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.song-artist {
+  font-size: 12px;
+  color: #999;
+  margin-left: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.add-btn {
+  padding: 4px 10px;
+  font-size: 18px;
+  background-color: transparent;
+  border: 1px solid #d81e06;
+  color: #d81e06;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.add-btn:hover {
+  background-color: #d81e06;
+  color: white;
+}
+
+/* 弹窗样式 */
+.dialog {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99;
+}
+
+.dialog-box {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 80vw;
+  max-width: 320px;
+  text-align: center;
+}
+
+.dialog-box h3 {
+  margin-bottom: 15px;
+  color: #C20C0C;
+  font-size: 18px;
+}
+
+.dialog-box ul {
+  list-style: none;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.dialog-box li {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  font-size: 15px;
+}
+.dialog-box li:hover {
+  background-color: #fceeee;
+  color: #d81e06;
+}
+
+.dialog-box button {
+  margin-top: 12px;
+  padding: 10px 20px;
+  background-color: #d81e06;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 15px;
+}
+.dialog-box button:hover {
+  background-color: #b00c0c;
 }
 
 </style>
