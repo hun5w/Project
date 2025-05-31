@@ -64,10 +64,19 @@ const playlists = ref([])
 
 function openAddToPlaylist(song) {
   targetSong.value = song
+
   const saved = localStorage.getItem('user_playlists')
-  playlists.value = saved ? JSON.parse(saved) : []
+  const allPlaylists = saved ? JSON.parse(saved) : []
+
+  const currentUser = JSON.parse(localStorage.getItem('current_user'))
+  const userId = currentUser?.id
+
+  // 只显示当前用户创建的歌单（包括默认歌单 id: 0）
+  playlists.value = allPlaylists.filter(p => p.userId === userId || p.id === 0)
+
   showDialog.value = true
 }
+
 
 function cancelAdd() {
   showDialog.value = false
