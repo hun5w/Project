@@ -45,11 +45,14 @@ const defaultPlaylist = {
   name: '精选推荐',
   isMine: false,
   songs: [
-    { id: 1001, name: '红玫瑰', artists: ['陈奕迅'] },
-    { id: 1002, name: '演员', artists: ['薛之谦'] },
-    { id: 1003, name: '光年之外', artists: ['邓紫棋'] }
+    { id: 1001, name: '反方向的钟', artists: ['周杰伦'] },
+    { id: 1002, name: '明明就', artists: ['周杰伦'] },
+    { id: 1003, name: '七里香', artists: ['周杰伦'] },
+    { id: 1004, name: '晴天', artists: ['周杰伦'] },
   ]
 }
+
+
 
 onMounted(() => {
   const saved = localStorage.getItem(STORAGE_KEY)
@@ -107,6 +110,12 @@ function createPlaylist() {
     return
   }
 
+  const nameExists = playlists.value.some(p => p.name === newPlaylistName.value.trim())
+if (nameExists) {
+  alert('已有同名歌单')
+  return
+}
+
   const currentUser = JSON.parse(localStorage.getItem('current_user'))
   const userId = currentUser?.id
 
@@ -143,38 +152,42 @@ function goBack() {
 
 <style scoped>
 .playlist-page {
-  max-width: 420px;
-  margin: 16px auto;
-  padding: 16px;
+  width: 100vw;
+  min-height: 100vh;
   background: #fff5f5;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgb(200 12 12 / 0.15);
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: #333;
+  padding-bottom: 20px;
 }
 
+/* 顶部标题栏 */
 .header {
+  position: sticky;
+  top: 0;
+  background-color: #fff5f5;
+  z-index: 10;
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  padding: 16px;
+  border-bottom: 1px solid #f1c0c0;
 }
 
 .back-btn {
-  font-size: 20px;
-  background: none;
+  background: transparent;
   border: none;
-  color: #c20c0c;
+  font-size: 20px;
+  color: #C20C0C;
   margin-right: 10px;
   cursor: pointer;
 }
 
 h2 {
-  flex: 1;
-  text-align: center;
-  font-size: 1.3rem;
-  color: #c20c0c;
+  font-size: 18px;
+  color: #C20C0C;
+  font-weight: bold;
 }
 
+/* 空状态 */
 .empty {
   text-align: center;
   font-style: italic;
@@ -182,9 +195,10 @@ h2 {
   margin: 15px 0;
 }
 
+/* 歌单列表 */
 ul {
   list-style: none;
-  padding: 0;
+  padding: 0 16px;
   margin-bottom: 16px;
   border-top: 1px solid #f1c0c0;
   border-bottom: 1px solid #f1c0c0;
@@ -196,9 +210,10 @@ li {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 6px;
+  padding: 12px 0;
   border-bottom: 1px solid #f1c0c0;
-  font-size: 0.95rem;
+  font-size: 15px; /* ✅ 歌单名称字体更适配 */
+  font-weight: 500;
 }
 
 .playlist-name {
@@ -207,20 +222,24 @@ li {
   transition: color 0.2s;
 }
 
+/* 删除按钮 */
 .delete-btn {
   background: none;
   color: #d00;
   border: 1px solid #f1bcbc;
   padding: 4px 10px;
-  font-size: 0.85rem;
+  font-size: 13px; /* ✅ 更适配的按钮字体 */
   border-radius: 6px;
   cursor: pointer;
 }
 
+/* 创建歌单按钮 */
 .create-btn {
-  width: 100%;
+  width: calc(100% - 32px);
+  margin: 0 auto 16px;
+  display: block;
   padding: 10px 0;
-  font-size: 1rem;
+  font-size: 15px; /* ✅ 更统一的按钮字体 */
   font-weight: bold;
   background-color: #c20c0c;
   color: white;
@@ -228,18 +247,23 @@ li {
   border-radius: 24px;
   cursor: pointer;
 }
+.create-btn:hover {
+  background-color: #b00c0c;
+}
 
+/* 创建对话框样式 */
 .create-dialog {
   margin-top: 20px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 0 16px;
 }
 
 .create-dialog input,
 .create-dialog button {
   width: 100%;
-  font-size: 0.95rem;
+  font-size: 14px; /* ✅ 输入与确认按钮更适配的字体 */
   padding: 10px 12px;
   box-sizing: border-box;
   border-radius: 20px;
@@ -260,4 +284,27 @@ li {
   color: white;
   border: none;
 }
+
+/* 移动端优化 */
+@media (max-width: 480px) {
+  h2 {
+    font-size: 16px;
+  }
+  li {
+    font-size: 14px;
+  }
+  .delete-btn {
+    font-size: 12px;
+    padding: 3px 8px;
+  }
+  .create-btn {
+    font-size: 14px;
+  }
+  .create-dialog input,
+  .create-dialog button {
+    font-size: 13px;
+  }
+}
 </style>
+
+
