@@ -87,11 +87,17 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    await loginUser({
+    const user =await loginUser({
       username: username.value,
       password: password.value
     })
+    localStorage.setItem('current_user_id', user.id)
+
+    console.log('登录成功，用户id:', user.id)
+    console.log('localStorage current_user_id:', localStorage.getItem('current_user_id'))
+
     alert('登录成功！欢迎回来！')
+    
     router.push('/mine')
   } catch (error) {
     loginError.value = error.message || '登录失败，请重试'
