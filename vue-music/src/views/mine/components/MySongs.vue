@@ -35,15 +35,17 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePlayerStore } from '@/store/player'
 import { useHistoryStore } from '@/store/history'
+import { defaultSongs } from '@/data/defaultSongs'
 
 const route = useRoute()
 const router = useRouter()
-
+const playlistId = parseInt(route.params.playlistId)
 const playlist = ref({ name: '', songs: [], isMine: false })
 const loading = ref(true)
 
 const playerStore = usePlayerStore()
 const historyStore = useHistoryStore()
+
 
 async function fetchPlaylist() {
   loading.value = true
@@ -102,7 +104,19 @@ function removeSong(index) {
   }
 }
 
-onMounted(fetchPlaylist)
+onMounted(() => {
+  if (playlistId === 0) {
+    playlist.value = {
+      id: 0,
+      name: '精选推荐',
+      songs: defaultSongs
+    }
+  } else {
+    const userPlaylists = JSON.parse(localStorage.getItem('user_playlists') || '[]')
+    const found = userPlaylists.find(p => p.id === playlistId)
+    if (found) playlist.value = found
+  }
+})
 </script>
 
 <style scoped>
