@@ -19,6 +19,7 @@
           <span class="song-artist">- {{ song.artists.join(', ') }}</span>
         </div>
 
+        <!-- 只有自建歌单才显示删除按钮 -->
         <button
           v-if="playlist.isMine"
           @click.stop="removeSong(index)"
@@ -35,38 +36,51 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePlayerStore } from '@/store/player'
 import { useHistoryStore } from '@/store/history'
-import { defaultSongs } from '@/data/defaultSongs'
+import { defaultSongs } from '@/data/defaultSongs'   
 
-const route = useRoute()
-const router = useRouter()
-const playlistId = parseInt(route.params.playlistId)
+const route   = useRoute()
+const router  = useRouter()
+const player  = usePlayerStore()
+const history = useHistoryStore()
+
 const playlist = ref({ name: '', songs: [], isMine: false })
-const loading = ref(true)
+const loading  = ref(true)
 
-const playerStore = usePlayerStore()
-const historyStore = useHistoryStore()
+function loadDefaultPlaylist() {
+  playlist.value = {
+    id: 0,
+    name: '精选推荐',
+    isMine: false,
+    // 把 artist 字段转为 artists 数组，保持模板一致
+    songs: defaultSongs.map(s => ({
+      ...s,
+      artists: Array.isArray(s.artists) ? s.artists : [s.artist]
+    }))
+  }
+}
 
-
-async function fetchPlaylist() {
+function fetchPlaylist() {
   loading.value = true
-  try {
-    // 从本地存储获取用户歌单列表
-    const saved = localStorage.getItem('user_playlists')
-    const localPlaylists = saved ? JSON.parse(saved) : []
+  const idStr = route.params.playlistId
 
-    const target = localPlaylists.find(p => p.id.toString() === route.params.playlistId)
-    if (target) {
-      playlist.value = {
-        name: target.name,
-        songs: target.songs || [],
-        isMine: true
-      }
+  // id==0 视为默认歌单
+  if (idStr === '0') {
+    loadDefaultPlaylist()
+    loading.value = false
+    return
+  }
+
+  try {
+    const saved = localStorage.getItem('user_playlists')
+    const lists = saved ? JSON.parse(saved) : []
+    const found = lists.find(p => p.id.toString() === idStr)
+    if (found) {
+      playlist.value = { ...found, isMine: true }
     } else {
-      // 若本地找不到，显示空歌单（或根据需求改为调用接口）
-      playlist.value = { name: '', songs: [], isMine: false }
+      playlist.value = { name: '未知歌单', songs: [], isMine: false }
     }
-  } catch (err) {
-    playlist.value = { name: '', songs: [], isMine: false }
+  } catch (e) {
+    playlist.value = { name: '加载失败', songs: [], isMine: false }
   } finally {
     loading.value = false
   }
@@ -77,47 +91,29 @@ function goBack() {
 }
 
 function goToSong(songId) {
-  const index = playlist.value.songs.findIndex(s => s.id === songId)
-  if (index === -1) return
-
-  playerStore.setPlaylist(playlist.value.songs.map(s => s.id))
-  playerStore.setCurrentIndex(index)
-  playerStore.setPlaying(true)
-
-  const song = playlist.value.songs[index]
-  historyStore.addSong(song)
-
-  router.push({ path: `/song/${songId}` })
+  const idx = playlist.value.songs.findIndex(s => s.id === songId)
+  if (idx === -1) return
+  player.setPlaylist(playlist.value.songs.map(s => s.id))
+  player.setCurrentIndex(idx)
+  player.setPlaying(true)
+  history.addSong(playlist.value.songs[idx])
+  router.push(`/song/${songId}`)
 }
 
 function removeSong(index) {
   playlist.value.songs.splice(index, 1)
-
-  // 更新本地存储
   const saved = localStorage.getItem('user_playlists')
-  const localPlaylists = saved ? JSON.parse(saved) : []
-
-  const idx = localPlaylists.findIndex(p => p.id.toString() === route.params.playlistId)
+  const lists = saved ? JSON.parse(saved) : []
+  const idx = lists.findIndex(p => p.id.toString() === route.params.playlistId)
   if (idx !== -1) {
-    localPlaylists[idx].songs = playlist.value.songs
-    localStorage.setItem('user_playlists', JSON.stringify(localPlaylists))
+    lists[idx].songs = playlist.value.songs
+    localStorage.setItem('user_playlists', JSON.stringify(lists))
   }
 }
 
-onMounted(() => {
-  if (playlistId === 0) {
-    playlist.value = {
-      id: 0,
-      name: '精选推荐',
-      songs: defaultSongs
-    }
-  } else {
-    const userPlaylists = JSON.parse(localStorage.getItem('user_playlists') || '[]')
-    const found = userPlaylists.find(p => p.id === playlistId)
-    if (found) playlist.value = found
-  }
-})
+onMounted(fetchPlaylist)
 </script>
+
 
 <style scoped>
 /* 页面整体白色背景 */
