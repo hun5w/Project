@@ -5,9 +5,11 @@
     <div v-if="playlists.length === 0">你还没有创建任何歌单，快去创建一个吧！</div>
 
     <ul>
-      <li v-for="playlist in playlists" :key="playlist.id">
-        {{ playlist.name }}
-      </li>
+      <li v-for="p in playlists" :key="p.id" @click="goToPlaylistDetail(p)">
+  {{ p.name }}
+</li>
+
+
     </ul>
 
     <button @click="showCreate = true">新建歌单</button>
@@ -22,7 +24,9 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const STORAGE_KEY = 'user_playlists'
 
 // 1. 先从 localStorage 读取
@@ -57,11 +61,24 @@ function createPlaylist() {
     ? Math.max(...playlists.value.map(p => p.id)) + 1
     : 1
 
-  playlists.value.push({ id: newId, name: newPlaylistName.value.trim() })
+  playlists.value.push({
+    id: newId,
+    name: newPlaylistName.value.trim(),
+    isMine: true,    // 添加这里，表示这是用户自己的歌单
+    songs: []        // 如果你希望新歌单初始有个空的 songs 数组，也可以加上
+  })
 
   newPlaylistName.value = ''
   showCreate.value = false
+
+  // 如果你有保存到 localStorage 或后端的逻辑，这里也别忘了同步更新
 }
+
+// 3. 路由跳转到新建的歌单
+function goToPlaylistDetail(p) {
+  router.push({ name: 'MySongs', params: { playlistId: p.id } })
+}
+
 </script>
 
 
