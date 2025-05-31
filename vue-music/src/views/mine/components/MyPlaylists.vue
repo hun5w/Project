@@ -53,24 +53,53 @@ const defaultPlaylist = {
 
 onMounted(() => {
   const saved = localStorage.getItem(STORAGE_KEY)
-  let userPlaylists = []
+  let allPlaylists = []
   if (saved) {
     try {
-      userPlaylists = JSON.parse(saved)
+      allPlaylists = JSON.parse(saved)
     } catch (e) {
       console.error('读取歌单数据失败', e)
     }
   }
 
-  // 确保默认歌单始终存在且放在第一位
-  playlists.value = [defaultPlaylist, ...userPlaylists.filter(p => p.id !== 0)]
+  // ✅ 获取当前用户信息
+  const currentUser = JSON.parse(localStorage.getItem('current_user'))
+  const userId = currentUser?.id
+
+  // ✅ 筛选当前用户的歌单（排除不是自己的）
+  const myPlaylists = allPlaylists.filter(p => p.userId === userId)
+
+  // ✅ 显示默认歌单 + 自己的歌单
+  playlists.value = [defaultPlaylist, ...myPlaylists]
 })
 
+
 watch(playlists, (newVal) => {
-  // 同步非默认歌单到本地
-  const toSave = newVal.filter(p => p.id !== 0)
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
+  const currentUser = JSON.parse(localStorage.getItem('current_user'))
+  const userId = currentUser?.id
+
+  // ✅ 获取所有本地歌单
+  const saved = localStorage.getItem(STORAGE_KEY)
+  let allPlaylists = []
+  if (saved) {
+    try {
+      allPlaylists = JSON.parse(saved)
+    } catch (e) {
+      console.error('读取歌单数据失败', e)
+    }
+  }
+
+  // ✅ 删除当前用户旧的歌单（不包括默认）
+  const otherUsersPlaylists = allPlaylists.filter(p => p.userId !== userId)
+
+  // ✅ 添加当前用户最新的歌单
+  const myPlaylistsToSave = newVal.filter(p => p.id !== 0 && p.userId === userId)
+
+  const final = [...otherUsersPlaylists, ...myPlaylistsToSave]
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(final))
 }, { deep: true })
+
 
 function createPlaylist() {
   if (!newPlaylistName.value.trim()) {
@@ -78,11 +107,15 @@ function createPlaylist() {
     return
   }
 
+  const currentUser = JSON.parse(localStorage.getItem('current_user'))
+  const userId = currentUser?.id
+
   const newId = Date.now()
   playlists.value.push({
     id: newId,
     name: newPlaylistName.value.trim(),
     isMine: true,
+    userId, // ✅ 添加用户 ID
     songs: []
   })
 
