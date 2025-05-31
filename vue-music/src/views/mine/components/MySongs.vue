@@ -93,7 +93,7 @@ function goBack() {
 function goToSong(songId) {
   const idx = playlist.value.songs.findIndex(s => s.id === songId)
   if (idx === -1) return
-  player.setPlaylist(playlist.value.songs.map(s => s.id))
+  player.setPlaylist(playlist.value.songs)
   player.setCurrentIndex(idx)
   player.setPlaying(true)
   history.addSong(playlist.value.songs[idx])
