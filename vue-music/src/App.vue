@@ -2,8 +2,7 @@
   <div id="app">
     <router-view /> <!-- 页面内容 -->
 
-    <!-- 播放栏常驻底部导航上方 -->
-    <PlayerBar v-if="!isLoginPage && showPlayerBar" />
+  
 
     <!-- 底部导航栏 -->
     <van-tabbar
@@ -18,16 +17,14 @@
       <van-tabbar-item to="/mine" icon="contact">我的</van-tabbar-item>
     </van-tabbar>
 
-    <!-- 全局音频播放器 -->
-    <GlobalAudioPlayer />
+
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import PlayerBar from '@/components/player/PlayerBar.vue'
-import GlobalAudioPlayer from '@/components/player/GlobalAudio.vue'
+
 
 const route = useRoute()
 
