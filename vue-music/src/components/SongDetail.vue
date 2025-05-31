@@ -1,7 +1,7 @@
 <template>
-  <div class="song-detail">
+  <div class="song-detail" v-if="currentSong && currentSong.name">
     <button @click="goBack">← 返回</button>
-    <h1>{{ song.name }}</h1>
+    <h1>{{ currentSong.name }}</h1>
     <audio
       ref="audio"
       :src="songUrl"
@@ -11,28 +11,28 @@
       controls
       autoplay
     ></audio>
-    <!-- 其他UI -->
   </div>
 </template>
 
+
+
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/store/player'
-import { getSongDetail, getSongUrl } from '@/api/song'
+import { getSongUrl } from '@/api/song'
 
 const playerStore = usePlayerStore()
 const router = useRouter()
 
-const song = ref({})
+// ✅ 使用 computed 获取当前歌曲
+const currentSong = computed(() => playerStore.playlist[playerStore.currentIndex])
 const songUrl = ref('')
 const audio = ref(null)
 
 async function loadSong() {
-  if (!playerStore.currentSongId) return
-  const detailRes = await getSongDetail(playerStore.currentSongId)
-  song.value = detailRes.data.songs[0]
-  const urlRes = await getSongUrl(playerStore.currentSongId)
+  if (!currentSong.value?.id) return
+  const urlRes = await getSongUrl(currentSong.value.id)
   songUrl.value = urlRes.data.data[0].url
 }
 
@@ -56,7 +56,6 @@ function onLoadedMetadata() {
   }
 }
 
-// 监听store.currentTime，如果与播放器时间不一致则更新播放器进度
 watch(() => playerStore.currentTime, (newTime) => {
   if (!audio.value) return
   const diff = Math.abs(audio.value.currentTime - newTime)
@@ -65,7 +64,6 @@ watch(() => playerStore.currentTime, (newTime) => {
   }
 })
 
-// 监听播放状态同步
 watch(() => playerStore.playing, (playing) => {
   if (!audio.value) return
   if (playing) {
@@ -75,13 +73,11 @@ watch(() => playerStore.playing, (playing) => {
   }
 })
 
-// 进入页面时隐藏底部播放框
 onMounted(() => {
   loadSong()
   window.dispatchEvent(new CustomEvent('hidePlayerBar'))
 })
 
-// 离开页面时显示底部播放框
 onBeforeUnmount(() => {
   playerStore.setPlaying(true)
 })
