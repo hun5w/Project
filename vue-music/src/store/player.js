@@ -12,42 +12,50 @@ export const usePlayerStore = defineStore('player', {
     currentSongId: (state) => state.playlist[state.currentIndex]?.id || null,
   },
   actions: {
-    setPlaylist(list) {
-      this.playlist = list
-      this.currentTime = 0
-      this.duration = 0
-    },
-    setCurrentIndex(index) {
-      if (index >= 0 && index < this.playlist.length) {
-        this.currentIndex = index
-        this.currentTime = 0
-        this.duration = 0
-      }
-    },
-    setPlaying(flag) {
-      this.playing = flag
-    },
-    togglePlay() {
-      this.playing = !this.playing
-    },
-    setCurrentTime(time) {
-      this.currentTime = time
-    },
-    setDuration(duration) {
-      this.duration = duration
-    },
-    seek(time) {
-      this.currentTime = time
-    },
-    next() {
-      this.currentIndex = (this.currentIndex + 1) % this.playlist.length
-      this.currentTime = 0
-      this.duration = 0
-    },
-    prev() {
-      this.currentIndex = (this.currentIndex - 1 + this.playlist.length) % this.playlist.length
-      this.currentTime = 0
-      this.duration = 0
-    },
+  setPlaylist(list) {
+    this.playlist = list
+    this.currentTime = 0
+    this.duration = 0
   },
+  setCurrentIndex(index) {
+    if (index >= 0 && index < this.playlist.length) {
+      this.currentIndex = index
+      this.currentTime = 0
+      this.duration = 0
+    }
+  },
+  setPlaying(flag) {
+    this.playing = flag
+  },
+  togglePlay() {
+    this.playing = !this.playing
+  },
+  setCurrentTime(time) {
+    this.currentTime = time
+  },
+  setDuration(duration) {
+    this.duration = duration
+  },
+  seek(time) {
+    this.currentTime = time
+  },
+  next() {
+    this.currentIndex = (this.currentIndex + 1) % this.playlist.length
+    this.currentTime = 0
+    this.duration = 0
+  },
+  prev() {
+    this.currentIndex = (this.currentIndex - 1 + this.playlist.length) % this.playlist.length
+    this.currentTime = 0
+    this.duration = 0
+  },
+
+  // ✅ 新增：播放本地歌单
+  playLocalSongs(songs, startIndex = 0) {
+    this.setPlaylist(songs)
+    this.setCurrentIndex(startIndex)
+    this.setPlaying(true)
+  },
+}
+,
 })
