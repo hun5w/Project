@@ -9,12 +9,26 @@
 
     <ul>
       <li v-for="p in playlists" :key="p.id">
-        <span @click="goToPlaylistDetail(p)" class="playlist-name">{{ p.name }}</span>
-        <button
-          class="delete-btn"
-          @click.stop="deletePlaylist(p.id)"
-          v-if="p.isMine !== false"
-        >删除</button>
+        <template v-if="renamingId === p.id">
+          <input v-model="renameName" class="rename-input" />
+          <button @click="confirmRename(p.id)">保存</button>
+          <button @click="cancelRename">取消</button>
+        </template>
+        <template v-else>
+          <span @click="goToPlaylistDetail(p)" class="playlist-name">{{ p.name }}</span>
+          <div>
+            <button
+              class="delete-btn"
+              @click.stop="deletePlaylist(p.id)"
+              v-if="p.isMine !== false"
+            >删除</button>
+            <button
+              class="delete-btn"
+              @click.stop="startRename(p)"
+              v-if="p.isMine !== false"
+            >重命名</button>
+          </div>
+        </template>
       </li>
     </ul>
 
@@ -39,7 +53,10 @@ const playlists = ref([])
 const showCreate = ref(false)
 const newPlaylistName = ref('')
 
-// 🧩 默认歌单：所有用户可见，不能删除
+const renamingId = ref(null)
+const renameName = ref('')
+
+// 默认歌单（不可删除）
 const defaultPlaylist = {
   id: 0,
   name: '精选推荐',
@@ -52,8 +69,6 @@ const defaultPlaylist = {
   ]
 }
 
-
-
 onMounted(() => {
   const saved = localStorage.getItem(STORAGE_KEY)
   let allPlaylists = []
@@ -65,23 +80,16 @@ onMounted(() => {
     }
   }
 
-  // ✅ 获取当前用户信息
   const currentUser = JSON.parse(localStorage.getItem('current_user'))
   const userId = currentUser?.id
-
-  // ✅ 筛选当前用户的歌单（排除不是自己的）
   const myPlaylists = allPlaylists.filter(p => p.userId === userId)
-
-  // ✅ 显示默认歌单 + 自己的歌单
   playlists.value = [defaultPlaylist, ...myPlaylists]
 })
-
 
 watch(playlists, (newVal) => {
   const currentUser = JSON.parse(localStorage.getItem('current_user'))
   const userId = currentUser?.id
 
-  // ✅ 获取所有本地歌单
   const saved = localStorage.getItem(STORAGE_KEY)
   let allPlaylists = []
   if (saved) {
@@ -92,17 +100,12 @@ watch(playlists, (newVal) => {
     }
   }
 
-  // ✅ 删除当前用户旧的歌单（不包括默认）
   const otherUsersPlaylists = allPlaylists.filter(p => p.userId !== userId)
-
-  // ✅ 添加当前用户最新的歌单
   const myPlaylistsToSave = newVal.filter(p => p.id !== 0 && p.userId === userId)
 
   const final = [...otherUsersPlaylists, ...myPlaylistsToSave]
-
   localStorage.setItem(STORAGE_KEY, JSON.stringify(final))
 }, { deep: true })
-
 
 function createPlaylist() {
   if (!newPlaylistName.value.trim()) {
@@ -111,10 +114,10 @@ function createPlaylist() {
   }
 
   const nameExists = playlists.value.some(p => p.name === newPlaylistName.value.trim())
-if (nameExists) {
-  alert('已有同名歌单')
-  return
-}
+  if (nameExists) {
+    alert('已有同名歌单')
+    return
+  }
 
   const currentUser = JSON.parse(localStorage.getItem('current_user'))
   const userId = currentUser?.id
@@ -124,7 +127,7 @@ if (nameExists) {
     id: newId,
     name: newPlaylistName.value.trim(),
     isMine: true,
-    userId, // ✅ 添加用户 ID
+    userId,
     songs: []
   })
 
@@ -133,8 +136,7 @@ if (nameExists) {
 }
 
 function deletePlaylist(id) {
-  if (id === 0) return // 防止删除默认歌单
-
+  if (id === 0) return
   const confirmed = confirm('确定要删除这个歌单吗？')
   if (confirmed) {
     playlists.value = playlists.value.filter(p => p.id !== id)
@@ -148,6 +150,37 @@ function goToPlaylistDetail(p) {
 function goBack() {
   router.back()
 }
+
+// 重命名逻辑
+function startRename(p) {
+  renamingId.value = p.id
+  renameName.value = p.name
+}
+
+function cancelRename() {
+  renamingId.value = null
+  renameName.value = ''
+}
+
+function confirmRename(id) {
+  const name = renameName.value.trim()
+  if (!name) {
+    alert('歌单名称不能为空')
+    return
+  }
+  const nameExists = playlists.value.some(p => p.name === name && p.id !== id)
+  if (nameExists) {
+    alert('已有同名歌单')
+    return
+  }
+
+  const target = playlists.value.find(p => p.id === id)
+  if (target) {
+    target.name = name
+  }
+
+  cancelRename()
+}
 </script>
 
 <style scoped>
@@ -160,7 +193,6 @@ function goBack() {
   padding-bottom: 20px;
 }
 
-/* 顶部标题栏 */
 .header {
   position: sticky;
   top: 0;
@@ -187,7 +219,6 @@ h2 {
   font-weight: bold;
 }
 
-/* 空状态 */
 .empty {
   text-align: center;
   font-style: italic;
@@ -195,7 +226,6 @@ h2 {
   margin: 15px 0;
 }
 
-/* 歌单列表 */
 ul {
   list-style: none;
   padding: 0 16px;
@@ -212,7 +242,7 @@ li {
   align-items: center;
   padding: 12px 0;
   border-bottom: 1px solid #f1c0c0;
-  font-size: 15px; /* ✅ 歌单名称字体更适配 */
+  font-size: 15px;
   font-weight: 500;
 }
 
@@ -222,24 +252,23 @@ li {
   transition: color 0.2s;
 }
 
-/* 删除按钮 */
 .delete-btn {
   background: none;
   color: #d00;
   border: 1px solid #f1bcbc;
   padding: 4px 10px;
-  font-size: 13px; /* ✅ 更适配的按钮字体 */
+  font-size: 13px;
   border-radius: 6px;
+  margin-left: 8px;
   cursor: pointer;
 }
 
-/* 创建歌单按钮 */
 .create-btn {
   width: calc(100% - 32px);
   margin: 0 auto 16px;
   display: block;
   padding: 10px 0;
-  font-size: 15px; /* ✅ 更统一的按钮字体 */
+  font-size: 15px;
   font-weight: bold;
   background-color: #c20c0c;
   color: white;
@@ -251,7 +280,6 @@ li {
   background-color: #b00c0c;
 }
 
-/* 创建对话框样式 */
 .create-dialog {
   margin-top: 20px;
   display: flex;
@@ -263,7 +291,7 @@ li {
 .create-dialog input,
 .create-dialog button {
   width: 100%;
-  font-size: 14px; /* ✅ 输入与确认按钮更适配的字体 */
+  font-size: 14px;
   padding: 10px 12px;
   box-sizing: border-box;
   border-radius: 20px;
@@ -285,7 +313,15 @@ li {
   border: none;
 }
 
-/* 移动端优化 */
+.rename-input {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 14px;
+  border: 1px solid #f1c0c0;
+  border-radius: 6px;
+  margin-right: 8px;
+}
+
 @media (max-width: 480px) {
   h2 {
     font-size: 16px;
@@ -306,5 +342,3 @@ li {
   }
 }
 </style>
-
-
