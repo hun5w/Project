@@ -31,10 +31,20 @@ const songUrl = ref('')
 const audio = ref(null)
 
 async function loadSong() {
-  if (!currentSong.value?.id) return
+
+  if (!currentSong.value) return
+
+  // 如果是本地歌曲，url 以 / 开头（你的约定），直接用本地路径
+  if (currentSong.value.url && currentSong.value.url.startsWith('/')) {
+    songUrl.value = currentSong.value.url
+    return
+  }
+
+  // 否则调用接口请求网易云音乐链接
   const urlRes = await getSongUrl(currentSong.value.id)
   songUrl.value = urlRes.data.data[0].url
 }
+
 
 function goBack() {
   router.back()
