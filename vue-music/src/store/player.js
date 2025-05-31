@@ -14,9 +14,7 @@ export const usePlayerStore = defineStore('player', {
   actions: {
     setPlaylist(list) {
       this.playlist = list
-      this.currentIndex = 0
       this.currentTime = 0
-      this.playing = false
       this.duration = 0
     },
     setCurrentIndex(index) {
