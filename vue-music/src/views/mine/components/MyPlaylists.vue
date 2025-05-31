@@ -1,18 +1,24 @@
 <template>
-  <div>
-    <h2>我的歌单</h2>
+  <div class="playlist-page">
+    <div class="header">
+      <button class="back-btn" @click="goBack">←</button>
+      <h2>我的歌单</h2>
+    </div>
 
-    <div v-if="playlists.length === 0">你还没有创建任何歌单，快去创建一个吧！</div>
+    <div v-if="playlists.length === 0" class="empty">你还没有创建任何歌单，快去创建一个吧！</div>
 
     <ul>
-      <li v-for="p in playlists" :key="p.id" @click="goToPlaylistDetail(p)">
-  {{ p.name }}
-</li>
-
-
+      <li v-for="p in playlists" :key="p.id">
+        <span @click="goToPlaylistDetail(p)" class="playlist-name">{{ p.name }}</span>
+        <button
+          class="delete-btn"
+          @click.stop="deletePlaylist(p.id)"
+          v-if="p.isMine !== false"
+        >删除</button>
+      </li>
     </ul>
 
-    <button @click="showCreate = true">新建歌单</button>
+    <button class="create-btn" @click="showCreate = true">新建歌单</button>
 
     <div v-if="showCreate" class="create-dialog">
       <input v-model="newPlaylistName" placeholder="请输入歌单名称" />
@@ -23,32 +29,47 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const STORAGE_KEY = 'user_playlists'
 
-// 1. 先从 localStorage 读取
 const playlists = ref([])
+const showCreate = ref(false)
+const newPlaylistName = ref('')
+
+// 🧩 默认歌单：所有用户可见，不能删除
+const defaultPlaylist = {
+  id: 0,
+  name: '精选推荐',
+  isMine: false,
+  songs: [
+    { id: 1001, name: '红玫瑰', artists: ['陈奕迅'] },
+    { id: 1002, name: '演员', artists: ['薛之谦'] },
+    { id: 1003, name: '光年之外', artists: ['邓紫棋'] }
+  ]
+}
 
 onMounted(() => {
   const saved = localStorage.getItem(STORAGE_KEY)
+  let userPlaylists = []
   if (saved) {
     try {
-      playlists.value = JSON.parse(saved)
+      userPlaylists = JSON.parse(saved)
     } catch (e) {
       console.error('读取歌单数据失败', e)
     }
   }
+
+  // 确保默认歌单始终存在且放在第一位
+  playlists.value = [defaultPlaylist, ...userPlaylists.filter(p => p.id !== 0)]
 })
 
-const showCreate = ref(false)
-const newPlaylistName = ref('')
-
-// 2. 监听 playlists 变化，同步存储到 localStorage
 watch(playlists, (newVal) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal))
+  // 同步非默认歌单到本地
+  const toSave = newVal.filter(p => p.id !== 0)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
 }, { deep: true })
 
 function createPlaylist() {
@@ -57,151 +78,153 @@ function createPlaylist() {
     return
   }
 
-  const newId = playlists.value.length
-    ? Math.max(...playlists.value.map(p => p.id)) + 1
-    : 1
-
+  const newId = Date.now()
   playlists.value.push({
     id: newId,
     name: newPlaylistName.value.trim(),
-    isMine: true,    // 添加这里，表示这是用户自己的歌单
-    songs: []        // 如果你希望新歌单初始有个空的 songs 数组，也可以加上
+    isMine: true,
+    songs: []
   })
 
   newPlaylistName.value = ''
   showCreate.value = false
-
-  // 如果你有保存到 localStorage 或后端的逻辑，这里也别忘了同步更新
 }
 
-// 3. 路由跳转到新建的歌单
+function deletePlaylist(id) {
+  if (id === 0) return // 防止删除默认歌单
+
+  const confirmed = confirm('确定要删除这个歌单吗？')
+  if (confirmed) {
+    playlists.value = playlists.value.filter(p => p.id !== id)
+  }
+}
+
 function goToPlaylistDetail(p) {
   router.push({ name: 'MySongs', params: { playlistId: p.id } })
 }
 
+function goBack() {
+  router.back()
+}
 </script>
 
-
 <style scoped>
-/* 页面整体容器 */
-div {
-  max-width: 480px;
-  margin: 30px auto;
-  padding: 20px;
+.playlist-page {
+  max-width: 420px;
+  margin: 16px auto;
+  padding: 16px;
   background: #fff5f5;
+  border-radius: 12px;
   box-shadow: 0 4px 10px rgb(200 12 12 / 0.15);
-  border-radius: 10px;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: #333;
 }
 
-/* 标题 */
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.back-btn {
+  font-size: 20px;
+  background: none;
+  border: none;
+  color: #c20c0c;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
 h2 {
-  font-weight: 700;
-  font-size: 1.8rem;
-  margin-bottom: 20px;
+  flex: 1;
   text-align: center;
-  color: #C20C0C;
+  font-size: 1.3rem;
+  color: #c20c0c;
 }
 
-/* 提示文字 */
-div[v-if] {
+.empty {
   text-align: center;
-  color: #aa4444;
   font-style: italic;
-  margin-bottom: 15px;
+  color: #bb4444;
+  margin: 15px 0;
 }
 
-/* 歌单列表 */
 ul {
   list-style: none;
   padding: 0;
-  margin-bottom: 20px;
-  max-height: 320px;
-  overflow-y: auto;
+  margin-bottom: 16px;
   border-top: 1px solid #f1c0c0;
   border-bottom: 1px solid #f1c0c0;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
-/* 每条歌单 */
 li {
-  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 6px;
   border-bottom: 1px solid #f1c0c0;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
+}
+
+.playlist-name {
+  flex: 1;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: color 0.2s;
 }
 
-li:hover {
-  background-color: #f8d7d7;
-  color: #C20C0C;
+.delete-btn {
+  background: none;
+  color: #d00;
+  border: 1px solid #f1bcbc;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
-/* 新建歌单按钮 */
-button {
-  display: inline-block;
-  padding: 10px 20px;
+.create-btn {
+  width: 100%;
+  padding: 10px 0;
   font-size: 1rem;
-  font-weight: 600;
-  background-color: #C20C0C;
+  font-weight: bold;
+  background-color: #c20c0c;
   color: white;
   border: none;
-  border-radius: 25px;
+  border-radius: 24px;
   cursor: pointer;
-  transition: background-color 0.3s;
-  margin-top: 10px;
 }
 
-button:hover {
-  background-color: #9a0a0a;
-}
-
-/* 新建歌单输入框和按钮容器 */
 .create-dialog {
   margin-top: 20px;
   display: flex;
+  flex-direction: column;
   gap: 10px;
-  align-items: center;
 }
 
-/* 输入框 */
-.create-dialog input {
-  flex-grow: 1;
-  padding: 10px 15px;
-  font-size: 1rem;
-  border: 1.5px solid #f1c0c0;
-  border-radius: 25px;
-  outline-offset: 2px;
-  transition: border-color 0.3s;
-}
-
-.create-dialog input:focus {
-  border-color: #C20C0C;
-}
-
-/* 创建/取消按钮 */
+.create-dialog input,
 .create-dialog button {
-  padding: 8px 16px;
+  width: 100%;
   font-size: 0.95rem;
+  padding: 10px 12px;
+  box-sizing: border-box;
   border-radius: 20px;
 }
 
-.create-dialog button:first-child {
-  background-color: #E73535;
-  color: white;
+.create-dialog input {
+  border: 1.5px solid #f1c0c0;
 }
 
-.create-dialog button:first-child:hover {
-  background-color: #B82B2B;
+.create-dialog button:first-child {
+  background-color: #e73535;
+  color: white;
+  border: none;
 }
 
 .create-dialog button:last-child {
-  background-color: #f44336;
+  background-color: #bbb;
   color: white;
-}
-
-.create-dialog button:last-child:hover {
-  background-color: #bb2d27;
+  border: none;
 }
 </style>
-
