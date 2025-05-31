@@ -58,9 +58,9 @@ const history = computed(() => historyStore.songs)
 function goToSong(songId) {
   const index = history.value.findIndex(s => s.id === songId)
   if (index === -1) return
-  const song = history.value[index]
-  historyStore.addSong(song)
-  playerStore.setPlaylist(history.value.map(s => s.id))
+  
+  // ✅ 把整个 history 设置成播放列表
+  playerStore.setPlaylist(history.value) // 注意：这里不要 .songs
   playerStore.setCurrentIndex(index)
   playerStore.setPlaying(true)
   router.push({ path: `/song/${songId}` })
