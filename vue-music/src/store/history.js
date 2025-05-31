@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia'
 
-// 模拟从用户系统中获取当前用户名（你也可以从 store / localStorage 中获取）
+let cachedUsername = null
 function getCurrentUsername() {
-  return localStorage.getItem('current_user') || 'guest'
+  if (cachedUsername) return cachedUsername
+  cachedUsername = localStorage.getItem('current_user') || 'guest'
+  return cachedUsername
 }
 
 function getHistoryKey() {
@@ -11,31 +13,43 @@ function getHistoryKey() {
 
 export const useHistoryStore = defineStore('history', {
   state: () => ({
-    songs: JSON.parse(localStorage.getItem(getHistoryKey()) || '[]')
+    songs: []
   }),
 
   actions: {
     addSong(song) {
       const key = getHistoryKey()
       const existing = JSON.parse(localStorage.getItem(key) || '[]')
-
       const updated = existing.filter(item => item.id !== song.id)
       updated.unshift(song)
       if (updated.length > 50) updated.pop()
+      localStorage.setItem(key, JSON.stringify(updated))
+      this.songs = updated
+    },
 
+    removeSongById(songId) {
+      const key = getHistoryKey()
+      const existing = JSON.parse(localStorage.getItem(key) || '[]')
+      const updated = existing.filter(song => song.id !== songId)
       localStorage.setItem(key, JSON.stringify(updated))
       this.songs = updated
     },
 
     clearHistory() {
       const key = getHistoryKey()
-      this.songs = []
       localStorage.removeItem(key)
+      this.songs = []
     },
 
     refresh() {
       const key = getHistoryKey()
-      this.songs = JSON.parse(localStorage.getItem(key) || '[]')
+      try {
+        const stored = localStorage.getItem(key)
+        this.songs = stored ? JSON.parse(stored) : []
+      } catch (e) {
+        console.error('播放历史数据解析失败', e)
+        this.songs = []
+      }
     }
   }
 })
