@@ -1,9 +1,10 @@
 <template>
   <div class="history-page">
-    <!-- 返回按钮 -->
+    <!-- 返回按钮和清空按钮 -->
     <div class="header">
       <button class="back-btn" @click="router.back()">←</button>
       <h2>播放历史</h2>
+      <button class="clear-all-btn" @click="clearAllHistory">清空</button>
     </div>
 
     <ul class="song-list">
@@ -12,7 +13,10 @@
           <span class="song-name">{{ song.name }}</span>
           <span class="song-artist">- {{ song.artists?.join(', ') }}</span>
         </div>
-        <button class="add-btn" @click.stop="openAddToPlaylist(song)">+</button>
+        <div class="action-btns">
+          <button class="add-btn" @click.stop="openAddToPlaylist(song)">+</button>
+          <button class="delete-btn" @click.stop="deleteHistory(song.id)">✖</button>
+        </div>
       </li>
     </ul>
 
@@ -40,6 +44,11 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/store/player'
 import { useHistoryStore } from '@/store/history'
+import { onMounted } from 'vue'
+
+onMounted(() => {
+  historyStore.refresh()
+})
 
 const router = useRouter()
 const playerStore = usePlayerStore()
@@ -57,6 +66,9 @@ function goToSong(songId) {
   router.push({ path: `/song/${songId}` })
 }
 
+// 当前登录用户 ID（用于筛选歌单）
+const currentUserId = localStorage.getItem('current_user_id')
+
 // 添加到歌单逻辑
 const showDialog = ref(false)
 const targetSong = ref(null)
@@ -64,19 +76,12 @@ const playlists = ref([])
 
 function openAddToPlaylist(song) {
   targetSong.value = song
-
   const saved = localStorage.getItem('user_playlists')
-  const allPlaylists = saved ? JSON.parse(saved) : []
-
-  const currentUser = JSON.parse(localStorage.getItem('current_user'))
-  const userId = currentUser?.id
-
-  // 只显示当前用户创建的歌单（包括默认歌单 id: 0）
-  playlists.value = allPlaylists.filter(p => p.userId === userId || p.id === 0)
-
+  const all = saved ? JSON.parse(saved) : []
+  // 只显示当前用户创建的歌单
+  playlists.value = all.filter(p => p.userId === currentUserId)
   showDialog.value = true
 }
-
 
 function cancelAdd() {
   showDialog.value = false
@@ -86,7 +91,7 @@ function cancelAdd() {
 function addToPlaylist(playlistId) {
   const saved = localStorage.getItem('user_playlists')
   let allPlaylists = saved ? JSON.parse(saved) : []
-  const playlist = allPlaylists.find(p => p.id === playlistId)
+  const playlist = allPlaylists.find(p => p.id === playlistId && p.userId === currentUserId)
   if (!playlist) return
   if (!playlist.songs) playlist.songs = []
 
@@ -99,6 +104,24 @@ function addToPlaylist(playlistId) {
   }
 
   cancelAdd()
+}
+
+// 删除单条历史记录
+function deleteHistory(songId) {
+  if (confirm('确定要删除这条记录吗？')) {
+    historyStore.removeSongById(songId)
+    historyStore.refresh()  // 强制同步最新数据
+    alert('删除成功')
+  }
+}
+
+
+// 清空所有历史记录
+function clearAllHistory() {
+  if (confirm('确定要清空所有播放记录吗？')) {
+    historyStore.clearHistory()
+    alert('播放记录已清空')
+  }
 }
 </script>
 
@@ -138,6 +161,20 @@ h2 {
   font-weight: bold;
 }
 
+.clear-all-btn {
+  margin-left: auto;
+  background-color: #d81e06;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.clear-all-btn:hover {
+  background-color: #b00c0c;
+}
+
 .song-list {
   list-style: none;
   padding: 0 16px;
@@ -169,6 +206,11 @@ h2 {
   color: #888;
 }
 
+.action-btns {
+  display: flex;
+  gap: 6px;
+}
+
 .add-btn {
   padding: 4px 10px;
   font-size: 18px;
@@ -181,6 +223,20 @@ h2 {
 }
 .add-btn:hover {
   background-color: #d81e06;
+  color: white;
+}
+
+.delete-btn {
+  padding: 4px 10px;
+  font-size: 16px;
+  background-color: transparent;
+  border: 1px solid #aaa;
+  color: #666;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.delete-btn:hover {
+  background-color: #ccc;
   color: white;
 }
 
