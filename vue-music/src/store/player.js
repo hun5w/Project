@@ -7,12 +7,14 @@ export const usePlayerStore = defineStore('player', {
     playing: false,
     currentTime: 0,
     duration: 0,
+    parsedLyrics: [],
   }),
   getters: {
     currentSongId: (state) => state.playlist[state.currentIndex]?.id || null,
   },
   actions: {
   setPlaylist(list) {
+    console.log('设置播放列表:', list)
     this.playlist = list
     this.currentTime = 0
     this.duration = 0
@@ -49,6 +51,9 @@ export const usePlayerStore = defineStore('player', {
     this.currentTime = 0
     this.duration = 0
   },
+  setParsedLyrics(lyrics) {
+      this.parsedLyrics = lyrics || []
+    },
 }
 ,
 })
