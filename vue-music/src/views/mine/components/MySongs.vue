@@ -3,6 +3,14 @@
     <button class="back-btn" @click="goBack" aria-label="返回">← 返回</button>
     <h1 class="title">歌单详情：{{ playlist.name }}</h1>
 
+    <!-- 上传本地 MP3 按钮（仅限自建歌单） -->
+    <div v-if="playlist.isMine" class="upload-local">
+      <label class="upload-btn">
+        上传本地 MP3
+        <input type="file" accept=".mp3" @change="handleUpload" hidden />
+      </label>
+    </div>
+
     <div v-if="loading" class="loading">加载中...</div>
     <div v-else-if="!playlist.songs || playlist.songs.length === 0" class="empty">暂无歌曲</div>
 
@@ -46,12 +54,13 @@ const history = useHistoryStore()
 const playlist = ref({ name: '', songs: [], isMine: false })
 const loading  = ref(true)
 
+const localSongs = ref(JSON.parse(localStorage.getItem('localSongs') || '[]'))
+
 function loadDefaultPlaylist() {
   playlist.value = {
     id: 0,
-    name: '精选推荐',
+    name: '本地测试用歌单',
     isMine: false,
-    // 把 artist 字段转为 artists 数组，保持模板一致
     songs: defaultSongs.map(s => ({
       ...s,
       artists: Array.isArray(s.artists) ? s.artists : [s.artist]
@@ -111,6 +120,36 @@ function removeSong(index) {
   }
 }
 
+function handleUpload(event) {
+  const files = event.target.files
+  if (!files.length) return
+
+  Array.from(files).forEach(async file => {
+    const id = Date.now() + '_' + file.name
+    const objectUrl = URL.createObjectURL(file)
+
+    // 读取文件内容为 ArrayBuffer（存入 IndexedDB）
+    const buffer = await file.arrayBuffer()
+
+    const song = {
+      id,
+      name: file.name.replace(/\.[^/.]+$/, ''),
+      artist: '本地上传',
+      cover: '', // 可后续补充封面上传
+      source: 'local',
+      url: objectUrl, // 用于本次播放
+      buffer,         // 用于下次从 indexedDB 恢复
+    }
+
+    // 存入 localStorage（用于显示）
+    localSongs.value.push(song)
+    localStorage.setItem('localSongs', JSON.stringify(localSongs.value))
+
+    // 存入 IndexedDB（用于持久化）
+    await saveSongToDB(song)
+  })
+}
+
 onMounted(fetchPlaylist)
 </script>
 
@@ -156,7 +195,25 @@ h1 {
   letter-spacing: 0.05em;
 }
 
-/* 加载与无内容提示 */
+.upload-local {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.upload-btn {
+  background-color: #d81e06;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+.upload-btn:hover {
+  background-color: #b71403;
+}
+
 .text-gray-500,
 .text-gray-400 {
   text-align: center;
