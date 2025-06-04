@@ -68,16 +68,15 @@ function toggleView() {
   showLyrics.value = !showLyrics.value
 }
 
-// 假设你的本地歌曲 ID 列表，写你实际的本地歌曲 id
-const localSongIds = new Set([1001, 1002, 1003, 1004])
+
 
 async function loadSong() {
   if (!currentSong.value) return
 
   const song = currentSong.value
 
-  // 判断是否本地歌曲
-  const isLocalSong = localSongIds.has(song.id)
+
+const isLocalSong = song.source === 'local'
 
   try {
   if (isLocalSong) {
