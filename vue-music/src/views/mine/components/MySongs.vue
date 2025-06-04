@@ -44,7 +44,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePlayerStore } from '@/store/player'
 import { useHistoryStore } from '@/store/history'
-import { defaultSongs } from '@/data/defaultSongs'   
+import { defaultSongs } from '@/data/defaultSongs'
 
 const route   = useRoute()
 const router  = useRouter()
@@ -53,8 +53,6 @@ const history = useHistoryStore()
 
 const playlist = ref({ name: '', songs: [], isMine: false })
 const loading  = ref(true)
-
-const localSongs = ref(JSON.parse(localStorage.getItem('localSongs') || '[]'))
 
 function loadDefaultPlaylist() {
   playlist.value = {
@@ -72,7 +70,6 @@ function fetchPlaylist() {
   loading.value = true
   const idStr = route.params.playlistId
 
-  // id==0 视为默认歌单
   if (idStr === '0') {
     loadDefaultPlaylist()
     loading.value = false
@@ -121,56 +118,52 @@ function removeSong(index) {
 }
 
 function handleUpload(event) {
-  const files = event.target.files
-  if (!files.length) return
+  const file = event.target.files[0]
+  if (!file || !file.name.endsWith('.mp3')) {
+    alert('请选择一个 MP3 文件')
+    return
+  }
 
-  Array.from(files).forEach(async file => {
-    const id = Date.now() + '_' + file.name
-    const objectUrl = URL.createObjectURL(file)
+  const url = URL.createObjectURL(file)
+  const song = {
+    id: Date.now(), // 用时间戳模拟唯一 ID
+    name: file.name.replace(/\.mp3$/i, ''),
+    artists: ['本地上传'],
+    url,
+    source: 'local'
+  }
 
-    // 读取文件内容为 ArrayBuffer（存入 IndexedDB）
-    const buffer = await file.arrayBuffer()
+  playlist.value.songs.push(song)
 
-    const song = {
-      id,
-      name: file.name.replace(/\.[^/.]+$/, ''),
-      artist: '本地上传',
-      cover: '', // 可后续补充封面上传
-      source: 'local',
-      url: objectUrl, // 用于本次播放
-      buffer,         // 用于下次从 indexedDB 恢复
-    }
+  const saved = localStorage.getItem('user_playlists')
+  const lists = saved ? JSON.parse(saved) : []
+  const idx = lists.findIndex(p => p.id.toString() === route.params.playlistId)
+  if (idx !== -1) {
+    lists[idx].songs = playlist.value.songs
+    localStorage.setItem('user_playlists', JSON.stringify(lists))
+  }
 
-    // 存入 localStorage（用于显示）
-    localSongs.value.push(song)
-    localStorage.setItem('localSongs', JSON.stringify(localSongs.value))
-
-    // 存入 IndexedDB（用于持久化）
-    await saveSongToDB(song)
-  })
+  event.target.value = '' // 允许再次选择相同文件
 }
 
 onMounted(fetchPlaylist)
 </script>
 
-
 <style scoped>
-/* 页面整体白色背景 */
 .p-4 {
   padding: 1rem;
   background-color: #fff;
   min-height: 100vh;
   font-family: "微软雅黑", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  color: #222; /* 深灰字体 */
+  color: #222;
   line-height: 1.4;
 }
 
-/* 返回按钮 */
 .back-btn {
   margin-bottom: 1rem;
   padding: 0.35rem 0.9rem;
   font-size: 14px;
-  color: #d81e06; /* 网易云红 */
+  color: #d81e06;
   border: 1.8px solid #d81e06;
   border-radius: 20px;
   background: transparent;
@@ -185,7 +178,6 @@ onMounted(fetchPlaylist)
   box-shadow: 0 0 6px #d81e06aa;
 }
 
-/* 标题 */
 h1 {
   font-size: 20px;
   font-weight: 700;
@@ -223,7 +215,6 @@ h1 {
   font-weight: 500;
 }
 
-/* 歌曲列表 */
 ul {
   list-style: none;
   padding: 0;
@@ -231,7 +222,6 @@ ul {
   max-width: 100%;
 }
 
-/* 每首歌条目 */
 li {
   display: flex;
   justify-content: space-between;
@@ -250,7 +240,6 @@ li:hover {
   color: #d81e06;
 }
 
-/* 歌名 */
 li span:first-child {
   font-weight: 600;
   max-width: 65%;
@@ -259,7 +248,6 @@ li span:first-child {
   text-overflow: ellipsis;
 }
 
-/* 艺术家名称 */
 li span:last-child {
   font-size: 12px;
   color: #999;
@@ -269,7 +257,6 @@ li span:last-child {
   user-select: none;
 }
 
-/* 删除按钮 */
 .delete-btn {
   background-color: transparent;
   border: none;
@@ -285,18 +272,15 @@ li span:last-child {
   color: #fff;
 }
 
-/* 滚动条样式 */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-
 ::-webkit-scrollbar-thumb {
   background-color: #d81e06;
   border-radius: 3px;
 }
-
 ::-webkit-scrollbar-track {
   background-color: #f7f7f7;
 }
-</style>
+</style> mysongs
