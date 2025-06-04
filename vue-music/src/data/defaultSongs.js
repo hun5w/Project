@@ -7,7 +7,8 @@ export const defaultSongs = [
     cover: '/music/cover1.jpg', 
     duration: 258,
     local: true,
-    lyricPath: '/music/反方向的钟.lrc' 
+    lyricPath: '/music/反方向的钟.lrc', 
+    source: 'local'
   },
   {
     id: 1002,
@@ -17,7 +18,8 @@ export const defaultSongs = [
     cover: '/music/cover2.jpg',
     duration: 260,
     local: true,
-    lyricPath: '/music/明明就.lrc'
+    lyricPath: '/music/明明就.lrc',
+    source: 'local'
   },
   {
     id: 1003,
@@ -27,7 +29,8 @@ export const defaultSongs = [
     cover: '/music/cover3.jpg',
     duration: 300,
     local: true,
-    lyricPath: '/music/七里香.lrc'
+    lyricPath: '/music/七里香.lrc',
+    source: 'local'
   },
   {
     id: 1004,
@@ -37,6 +40,7 @@ export const defaultSongs = [
     cover: '/music/cover4.jpg',
     duration: 270,
     local: true,
-    lyricPath: '/music/晴天.lrc'
+    lyricPath: '/music/晴天.lrc',
+    source: 'local'
   }
 ]
