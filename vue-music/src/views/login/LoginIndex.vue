@@ -36,6 +36,17 @@
       登录
     </van-button>
 
+    <van-button
+      type="default"
+      block
+      round
+      class="guest-btn"
+      @click="handleGuestLogin"
+      :disabled="loading"
+    >
+      游客登录
+    </van-button>
+
     <div v-if="loginError" class="error-msg login-error">{{ loginError }}</div>
 
     <p class="switch-text">
@@ -78,6 +89,17 @@ const validateInputs = () => {
   validateUsername()
   validatePassword()
   return !usernameError.value && !passwordError.value
+}
+// 游客登录逻辑
+const handleGuestLogin = () => {
+  const guestUser = {
+    id: 'guest_' + Date.now(),
+    username: '游客用户'
+  }
+  localStorage.setItem('current_user_id', guestUser.id)
+  localStorage.setItem('guest_user', JSON.stringify(guestUser))
+  alert('以游客身份登录，欢迎体验！')
+  router.push('/mine')
 }
 
 // 登录主逻辑
@@ -187,4 +209,16 @@ h2 {
 .link:hover {
   color: #f33a3a;
 }
+
+.guest-btn {
+  margin-top: 12px;
+  background-color: #f5f5f5;
+  color: #555;
+  border: 1px solid #ccc;
+}
+
+.guest-btn:hover {
+  background-color: #e6e6e6;
+}
+
 </style>
