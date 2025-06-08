@@ -54,14 +54,13 @@
       <span class="link" @click="goToRegister">点我注册</span>
     </p>
     <p class="switch-text">
-  忘记密码？<span class="link" @click="goToRecover">点我找回</span>
+      忘记密码？<span class="link" @click="goToRecover">点我找回</span>
     </p>
-
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { loginUser } from '@/api/auth'
 import { useRouter } from 'vue-router'
 
@@ -73,6 +72,16 @@ const loginError = ref('')
 const loading = ref(false)
 
 const router = useRouter()
+
+// 页面加载时清除旧的游客登录状态
+onMounted(() => {
+  const isGuest = localStorage.getItem('current_user_id')?.startsWith('guest_')
+  if (isGuest) {
+    localStorage.removeItem('current_user_id')
+    localStorage.removeItem('guest_user')
+    console.log('检测到游客身份，已清除游客数据')
+  }
+})
 
 // 校验用户名是否为空
 const validateUsername = () => {
@@ -90,12 +99,19 @@ const validateInputs = () => {
   validatePassword()
   return !usernameError.value && !passwordError.value
 }
+
 // 游客登录逻辑
 const handleGuestLogin = () => {
+  // 清除旧的游客数据
+  localStorage.removeItem('current_user_id')
+  localStorage.removeItem('guest_user')
+  localStorage.removeItem('play_history_guest')
+  // 创建新的游客信息
   const guestUser = {
     id: 'guest_' + Date.now(),
     username: '游客用户'
   }
+
   localStorage.setItem('current_user_id', guestUser.id)
   localStorage.setItem('guest_user', JSON.stringify(guestUser))
   alert('以游客身份登录，欢迎体验！')
@@ -109,17 +125,15 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    const user =await loginUser({
+    const user = await loginUser({
       username: username.value,
       password: password.value
     })
+
     localStorage.setItem('current_user_id', user.id)
 
     console.log('登录成功，用户id:', user.id)
-    console.log('localStorage current_user_id:', localStorage.getItem('current_user_id'))
-
     alert('登录成功！欢迎回来！')
-    
     router.push('/mine')
   } catch (error) {
     loginError.value = error.message || '登录失败，请重试'
@@ -138,7 +152,6 @@ const goToRegister = () => {
 const goToRecover = () => {
   router.push('/recover')
 }
-
 </script>
 
 <style scoped>
@@ -220,5 +233,4 @@ h2 {
 .guest-btn:hover {
   background-color: #e6e6e6;
 }
-
 </style>

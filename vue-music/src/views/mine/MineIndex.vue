@@ -52,7 +52,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted ,watch} from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { getUserProfile, logoutUser } from '@/api/auth'
 import { useRouter } from 'vue-router'
 import { useHistoryStore } from '@/store/history'
@@ -63,21 +63,36 @@ const user = ref(getUserProfile())
 
 const historyStore = useHistoryStore()
 
-const isGuest = computed(() => !user.value)
+const isGuest = computed(() => {
+  const id = localStorage.getItem('current_user_id')
+  return id?.startsWith('guest_')
+})
 
-// 计算听歌总数 = 用户数据的 listenSongs + 播放历史去重后的歌曲数
+// 听歌总数计算
 const listenSongsCount = computed(() => {
   const historyList = Array.isArray(historyStore.songs) ? historyStore.songs : []
   const uniqueHistoryCount = new Set(historyList.map(song => song.id)).size
   return (user.value?.listenSongs || 0) + uniqueHistoryCount
 })
 
+// 判断后跳转
+const goToMyPlaylists = () => {
+  if (isGuest.value) {
+    alert('游客无法访问“我的歌单”，请先注册或登录')
+    return
+  }
+  router.push('/my-playlists')
+}
 
-
-// 导航相关
-const goToMyPlaylists = () => router.push('/my-playlists')
 const goToHistory = () => router.push('/history')
-const goToUserInfo = () => router.push('/info')
+
+const goToUserInfo = () => {
+  if (isGuest.value) {
+    alert('游客无法访问“个人信息”，请先注册或登录')
+    return
+  }
+  router.push('/info')
+}
 
 const logout = () => {
   logoutUser()
@@ -91,7 +106,7 @@ const goToLogin = () => {
   router.push('/login')
 }
 
-
+// 页面加载或返回可见时刷新信息
 onMounted(() => {
   historyStore.refresh()
 
@@ -111,11 +126,11 @@ function refreshProfile() {
   user.value = getUserProfile()
 }
 
-// 监听用户变动，刷新播放历史
 watch(user, () => {
   historyStore.refresh()
 })
 </script>
+
 
 
 
