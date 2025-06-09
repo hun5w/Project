@@ -20,7 +20,7 @@
       @click="toggleView"
       title="点击返回封面"
     >
-      <LyricView :lyrics="rawLyrics" :currentTime="currentTime" />
+      <LyricView :lyrics="playerStore.parsedLyrics" :currentTime="currentTime" />
     </div>
 
     <!-- 歌曲名和歌手 -->
@@ -71,68 +71,124 @@ function toggleView() {
 
 
 async function loadSong() {
-  if (!currentSong.value) return
+  if (!currentSong.value) return;
 
-  const song = currentSong.value
+  const song = currentSong.value;
+  console.log('currentSong:', song);
 
+  // 确定 songId
+  let songId = null;
+  if (typeof song === 'number' || typeof song === 'string') {
+    songId = song;
+  } else if (song && typeof song === 'object' && song.id) {
+    songId = song.id;
+  } else {
+    console.error('无法获取有效的 songId:', song);
+    return;
+  }
 
-const isLocalSong = song.source === 'local'
+  const isLocalSong = song.source === 'local';
 
   try {
-  if (isLocalSong) {
-    songUrl.value = song.url || '';
+    if (isLocalSong) {
+      // 本地歌曲处理
+      songUrl.value = song.url || '';
 
-    if (song.lyricPath) {
-      try {
-        const res = await fetch(song.lyricPath);
-        if (res.ok) {
-          rawLyrics.value = await res.text();
-        } else {
+      if (song.lyricPath) {
+        try {
+          const res = await fetch(song.lyricPath);
+          if (res.ok) {
+            rawLyrics.value = await res.text();
+          } else {
+            rawLyrics.value = '';
+            console.warn(`无法加载歌词文件: ${song.lyricPath}`);
+          }
+        } catch (error) {
           rawLyrics.value = '';
-          console.warn(`无法加载歌词文件: ${song.lyricPath}`);
+          console.error(`fetch歌词异常: ${error}`);
         }
-      } catch (error) {
+      } else {
         rawLyrics.value = '';
-        console.error(`fetch歌词异常: ${error}`);
       }
     } else {
-      rawLyrics.value = '';
-    }
-  } else {
       // 网络歌曲处理
-      const urlRes = await getSongUrl(song.id)
-      const urlData = urlRes?.data?.data
+      const urlRes = await getSongUrl(songId);
+      console.log('urlRes:', urlRes);
+
+      let urlData = null;
+      try {
+        let rawData = urlRes.data;
+
+        if (typeof rawData === 'string') {
+          // 如果是字符串，尝试提取第一个 JSON 对象
+          const jsonStrMatch = rawData.match(/\{.*?\}/s);
+          if (jsonStrMatch) {
+            const jsonStr = jsonStrMatch[0];
+            const parsed = JSON.parse(jsonStr);
+
+            if (parsed.code !== 200) {
+              console.warn('获取歌曲 URL 失败:', parsed.msg);
+              songUrl.value = '';
+              return;
+            }
+            urlData = parsed.data;
+          } else {
+            console.warn('无法正确解析歌曲URL返回的数据');
+            songUrl.value = '';
+            return;
+          }
+        } else if (typeof rawData === 'object') {
+          urlData = rawData.data;
+        } else {
+          console.warn('未知格式的歌曲 URL 数据');
+          songUrl.value = '';
+          return;
+        }
+      } catch (err) {
+        console.error('解析歌曲 URL 响应失败:', err);
+        songUrl.value = '';
+        return;
+      }
+
+      console.log('songId:', songId, 'urlData:', urlData);
+
       if (!Array.isArray(urlData) || !urlData[0]?.url) {
-        songUrl.value = ''
-        return
+        console.warn('无有效播放地址');
+        songUrl.value = '';
+        return;
       }
-      songUrl.value = urlData[0].url
+      songUrl.value = urlData[0].url;
 
-      const detailRes = await getSongDetail(song.id)
-      const songDetail = detailRes?.data?.songs?.[0]
-      if (songDetail) {
-        song.cover = songDetail.al.picUrl
-        song.artist = songDetail.ar.map(ar => ar.name).join(', ')
+      // 获取歌曲详情
+      const detailRes = await getSongDetail(songId);
+      const songDetail = detailRes?.data?.songs?.[0];
+      if (songDetail && song && typeof song === 'object') {
+        song.cover = songDetail.al.picUrl;
+        song.artist = songDetail.ar.map(ar => ar.name).join(', ');
       }
 
-      const lyricRes = await getLyric(song.id)
-      rawLyrics.value = lyricRes.data.lrc?.lyric || ''
-      playerStore.setParsedLyrics(parseLyrics(rawLyrics.value))
+      // 获取歌词
+      const lyricRes = await getLyric(songId);
+      rawLyrics.value = lyricRes.data.lrc?.lyric || '';
+      playerStore.setParsedLyrics(parseLyrics(rawLyrics.value));
     }
 
+    // 解析歌词缓存
     if (rawLyrics.value.trim()) {
-      const parsedLyrics = parseLyrics(rawLyrics.value)
-      playerStore.setParsedLyrics(parsedLyrics)
+      const parsedLyrics = parseLyrics(rawLyrics.value);
+      playerStore.setParsedLyrics(parsedLyrics);
     } else {
-      playerStore.setParsedLyrics([])
+      playerStore.setParsedLyrics([]);
     }
   } catch (error) {
-    songUrl.value = ''
-    rawLyrics.value = ''
-    playerStore.setParsedLyrics([])
-    console.error('加载歌曲失败:', error)
+    songUrl.value = '';
+    rawLyrics.value = '';
+    playerStore.setParsedLyrics([]);
+    console.error('加载歌曲失败:', error);
   }
 }
+
+
 
 
 

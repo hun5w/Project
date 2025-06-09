@@ -10,13 +10,15 @@ export function getSongDetail(songId) {
 }
 
 // 获取歌曲播放链接（支持设置音质 level，如 standard, exhigh, lossless）
-export function getSongUrl(songId, level = 'standard') {
+export function getSongUrl(songIds, level = 'standard') {
+  const idParam = Array.isArray(songIds) ? songIds.join(',') : songIds
   return request({
     url: '/song/url/v1',
     method: 'get',
-    params: { id: songId, level }
+    params: { id: idParam, level }
   })
 }
+
 
 // 检查歌曲是否可用（VIP/版权等问题）
 export function checkMusic(songId) {

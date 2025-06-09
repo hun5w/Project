@@ -76,7 +76,7 @@ const playSong = (song) => {
     artists: song.ar.map(a => a.name)
   })
   
-  playerStore.setPlaylist(songs.value.map(s => s.id))
+  playerStore.setPlaylist(songs.value)
   const index = songs.value.findIndex(s => s.id === song.id)
   playerStore.setCurrentIndex(index)
   playerStore.setPlaying(true)
