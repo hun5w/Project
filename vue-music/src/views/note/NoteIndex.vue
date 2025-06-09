@@ -16,10 +16,12 @@
 
     <!-- 编辑弹窗 -->
     <div v-if="editingPost" class="edit-modal">
-      <textarea v-model="editingContent"></textarea>
-      <button @click="saveEdit">保存</button>
-      <button @click="cancelEdit">取消</button>
-    </div>
+  <div>
+    <textarea v-model="editingContent" />
+    <button @click="saveEdit">保存</button>
+    <button @click="cancelEdit" style="background-color: #aaa;">取消</button>
+  </div>
+</div>
   </div>
 </template>
 
@@ -96,76 +98,93 @@ onMounted(() => {
 .discover-page {
   padding: 16px;
   font-family: sans-serif;
+  max-width: 100%;
 }
+
 h2 {
-  margin-top: 24px;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
+  margin: 16px 0;
 }
+
 .post-box {
   display: flex;
   flex-direction: column;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
+
 textarea {
-  padding: 8px;
+  padding: 12px;
   border: 1px solid #ccc;
-  border-radius: 6px;
-  min-height: 60px;
+  border-radius: 8px;
+  font-size: 15px;
   resize: none;
-  width: 100%;
 }
+
 button {
-  margin-top: 8px;
-  align-self: flex-end;
-  padding: 6px 12px;
+  padding: 10px 16px;
+  font-size: 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   background-color: #ec4141;
   color: white;
   cursor: pointer;
+  width: fit-content;
 }
+
 .event-item {
-  background-color: #f8f8f8;
+  background-color: #fefefe;
+  border-left: 4px solid #ff9e3c;
   border-radius: 8px;
   padding: 12px;
-  margin-top: 12px;
-  position: relative;
+  margin-bottom: 12px;
+  font-size: 15px;
 }
-.event-item.local {
-  border-left: 4px solid #ff9e3c;
-}
+
 .content {
-  margin: 6px 0;
+  margin-bottom: 8px;
 }
+
 .time {
-  font-size: 12px;
+  font-size: 13px;
   color: #999;
 }
+
 .no-post {
-  color: #888;
+  color: #aaa;
   font-size: 14px;
-  margin: 12px 0;
+  text-align: center;
+  margin: 24px 0;
 }
+
+/* 弹窗样式优化 */
 .edit-modal {
   position: fixed;
-  top: 30%;
-  left: 50%;
-  width: 300px;
-  padding: 16px;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 100;
 }
+
+.edit-modal > div {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 320px;
+}
+
 .edit-modal textarea {
   width: 100%;
-  min-height: 80px;
+  min-height: 100px;
   margin-bottom: 12px;
+  font-size: 15px;
 }
-.edit-modal button {
-  margin-right: 8px;
-}
+
 </style>
